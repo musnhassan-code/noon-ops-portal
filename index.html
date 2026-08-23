@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>noon MINUTES OPS | Portal Command Center</title>
+  <title>noon MINUTES OPS | Executive Command Center</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -14,14 +14,12 @@
 </head>
 <body>
 
-  <!-- HIGH-END AUTHENTICATION OVERLAY WITH ANIMATED NOON JUMBO TRUCK -->
+  <!-- AUTHENTICATION OVERLAY -->
   <div id="authOverlay">
     <div class="speed-grid-lines"></div>
 
-    <!-- ANIMATED REALISTIC NOON MINUTES JUMBO TRUCK -->
     <div class="jumbo-truck-container">
       <div class="jumbo-truck">
-        <!-- TRUCK CARGO CONTAINER (LEFT SIDE) -->
         <div class="truck-container-box">
           <div class="container-graphics">
             <div class="stripe-red"></div>
@@ -35,16 +33,13 @@
           </div>
         </div>
 
-        <!-- TRUCK CABIN (RIGHT SIDE - FRONT DIRECTION) -->
         <div class="truck-cabin">
           <div class="cabin-window"></div>
           <div class="cabin-headlight"></div>
         </div>
 
-        <!-- UNDERGLOW LEDS -->
         <div class="underglow-leds"></div>
 
-        <!-- WHEELS -->
         <div class="truck-wheel wheel-back-1"></div>
         <div class="truck-wheel wheel-back-2"></div>
         <div class="truck-wheel wheel-front"></div>
@@ -52,7 +47,6 @@
       <div class="truck-road-line"></div>
     </div>
 
-    <!-- LOGIN FORM CARD -->
     <div class="auth-card">
       <div class="auth-brand">
         <span class="noon-txt">noon</span>
@@ -61,7 +55,7 @@
       <p class="auth-sub">Operations Intelligence & Fleet Dispatch Portal</p>
       
       <div class="input-field-group">
-        <label>Corporate Work Email</label>
+        <label>Work Email Address</label>
         <input type="email" id="authEmailInput" placeholder="name@noon.com" autocomplete="off">
       </div>
 
@@ -70,9 +64,9 @@
         <input type="password" id="authPasscodeInput" placeholder="••••••••" maxlength="30" onkeypress="handleAuthKey(event)">
       </div>
 
-      <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
+      <button class="btn-login-submit" onclick="validateLogin()">Login to Portal ➔</button>
       
-      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Security Passcode?</div>
+      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Password? Request Reset</div>
       <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
     </div>
   </div>
@@ -96,14 +90,126 @@
     </div>
   </div>
 
-  <!-- TOP NAVIGATION NAVBAR -->
+  <!-- TRIP DETAILS MODAL (EXACT NOON DESIGN) -->
+  <div id="tripDetailModal" class="modal-overlay" style="display: none;">
+    <div class="trip-modal-card">
+      <button class="modal-close-btn" onclick="closeTripModal()">✕</button>
+      
+      <div class="trip-modal-header">
+        <div class="trip-title-wrap">
+          <span class="trip-breadcrumb">Trips ❯ <strong id="mTripIdHeader">TR-20260803-30FB33F1</strong></span>
+          <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
+            <h2 id="mTripIdTitle">TR-20260803-30FB33F1</h2>
+            <span class="badge-status" style="background:#dcfce7; color:#166534;">Completed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="trip-meta-grid">
+        <div class="meta-box">
+          <div class="meta-lbl">Vehicle Number</div>
+          <div class="meta-val" id="mVehicleNo">SUNCAI7387</div>
+        </div>
+        <div class="meta-box">
+          <div class="meta-lbl">Driver Name</div>
+          <div class="meta-val" id="mDriverName">sun001ibr</div>
+        </div>
+        <div class="meta-box">
+          <div class="meta-lbl">Created On</div>
+          <div class="meta-val" id="mCreatedDate">04 Aug 2026, 01:11 AM</div>
+        </div>
+        <div class="meta-box">
+          <div class="meta-lbl">Total Pallets / Totes</div>
+          <div class="meta-val" id="mTotalPallets">13 Pallets</div>
+        </div>
+      </div>
+
+      <div class="trip-body-grid">
+        <!-- LEFT: TIMELINE & MAP ROUTE -->
+        <div class="timeline-card">
+          <div class="card-sec-title">📍 Trip Timeline & Route Map</div>
+          
+          <!-- MAP ROUTE VISUALIZER -->
+          <div class="map-visual-box" id="mapVisualBox">
+            <div class="map-path-line"></div>
+            <div class="map-node node-start"><span>CAIIDO1</span></div>
+            <div class="map-node node-mid"><span>6th of October</span></div>
+            <div class="map-node node-end"><span>Hadayek Al Ahram</span></div>
+          </div>
+
+          <ul class="timeline-list" id="mTimelineList">
+            <li class="tl-item active">
+              <div class="tl-icon">✓</div>
+              <div class="tl-content">
+                <strong>CAIIDO1 (Source Warehouse)</strong>
+                <span>Departed: 04 Aug 2026, 02:09 AM</span>
+              </div>
+            </li>
+            <li class="tl-item active">
+              <div class="tl-icon">✓</div>
+              <div class="tl-content">
+                <strong>6th of October (Store 1)</strong>
+                <span>Departed: 04 Aug 2026, 03:32 AM</span>
+              </div>
+            </li>
+            <li class="tl-item active">
+              <div class="tl-icon">✓</div>
+              <div class="tl-content">
+                <strong>Hadayek Al Ahram 2 (Store 2)</strong>
+                <span>Arrived & Departed: 05:12 AM</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- RIGHT: PALLETS LIST SLIDE -->
+        <div class="pallets-slide-card">
+          <div class="card-sec-title" style="display:flex; justify-content:space-between;">
+            <span>📦 Loaded Pallets / Barcodes</span>
+            <span id="mPalletCountTag" style="color:var(--primary-red);">5 Barcodes</span>
+          </div>
+
+          <div class="pallet-items-list" id="mPalletsList">
+            <div class="pallet-item">
+              <div>
+                <div class="pallet-code">FPI7LI9J6ASOI</div>
+                <div class="pallet-type">Core Storage</div>
+              </div>
+              <span class="badge-status">Delivered</span>
+            </div>
+            <div class="pallet-item">
+              <div>
+                <div class="pallet-code">FPI7LLOR5JKWI</div>
+                <div class="pallet-type">Core Storage</div>
+              </div>
+              <span class="badge-status">Delivered</span>
+            </div>
+            <div class="pallet-item">
+              <div>
+                <div class="pallet-code">FPI81A1HE7WFG</div>
+                <div class="pallet-type">Core Storage</div>
+              </div>
+              <span class="badge-status">Delivered</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP NAVBAR -->
   <header class="top-navbar">
     <div class="brand-logo">
       <span class="noon-text">noon</span>
       <span class="ops-badge">MINUTES OPS</span>
     </div>
 
-    <div class="nav-tabs" id="navbarTabs"></div>
+    <div class="nav-tabs" id="navbarTabs">
+      <button class="nav-tab-btn active" id="btnTabBarcode" onclick="switchMainTab('barcodeStudio')">🏷️ Pallet Barcode Studio</button>
+      <button class="nav-tab-btn" id="btnTabPace" onclick="switchMainTab('pacePicking')">📦 Pace Picking Uploader</button>
+      <button class="nav-tab-btn" id="btnTabTrips" onclick="switchMainTab('dataEntry')">🗂️ Trips Command Center</button>
+      <button class="nav-tab-btn" id="btnTabAdmin" onclick="switchMainTab('adminTab')" style="display:none; color:#f59e0b;">👑 Admin Control</button>
+    </div>
 
     <div style="display:flex; align-items:center; gap:12px;">
       <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙 Dark Mode</button>
@@ -392,6 +498,7 @@ TGI83K1H6MMBEG</textarea>
           <span id="lastUpdatedTag" style="font-size:12px; font-weight:700; color:var(--text-muted); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);">Syncing with Google Sheets...</span>
         </div>
 
+        <!-- EXECUTIVE KPI CARDS -->
         <div class="stats-row">
           <div class="stat-card">
             <div class="val" id="deStatTrips">0</div>
@@ -425,6 +532,7 @@ TGI83K1H6MMBEG</textarea>
           </div>
         </div>
 
+        <!-- ACTION & MULTI-FILTER BAR -->
         <div class="action-bar">
           <div class="filter-group">
             <label>📅 Date:</label>
@@ -464,6 +572,7 @@ TGI83K1H6MMBEG</textarea>
           <input type="text" id="deSearchInput" placeholder="🔍 Search Store, Driver, Barcode..." onkeyup="applyDataEntryFilters()" style="margin-left: auto; width: 220px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
         </div>
 
+        <!-- EXECUTIVE ANALYTICS DASHBOARD GRID -->
         <div class="analytics-grid" id="deAnalyticsGrid">
           <div class="analytics-card">
             <h3>
@@ -482,17 +591,20 @@ TGI83K1H6MMBEG</textarea>
             </table>
           </div>
 
+          <!-- DRIVER FLEET SUMMARY WITH FULL METRICS -->
           <div class="analytics-card">
             <h3>
-              <span>🚚 Driver Fleet Utilization (Col I, J, O)</span>
+              <span>🚚 Driver Fleet Metrics (إجمالي الحمولات والفروع)</span>
               <small style="color: var(--text-muted);" id="deDriverCountLbl">0 Drivers</small>
             </h3>
             <table class="mini-table">
               <thead>
                 <tr>
-                  <th>Driver (DA)</th>
-                  <th>Vehicle</th>
-                  <th>Totes / Trips</th>
+                  <th>Driver / Vehicle</th>
+                  <th>Stores (فروع)</th>
+                  <th>Pallets / Totes</th>
+                  <th>Qty Dispatched</th>
+                  <th>Inspect</th>
                 </tr>
               </thead>
               <tbody id="deDriverTableBody"></tbody>
@@ -517,6 +629,7 @@ TGI83K1H6MMBEG</textarea>
           </div>
         </div>
 
+        <!-- MAIN DATA TABLE -->
         <div class="table-card">
           <div class="table-container">
             <table class="main-table">
