@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>noon MINUTES OPS | Ultimate Control Hub</title>
+  <title>noon MINUTES OPS | Portal Command Center</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -14,27 +14,48 @@
 </head>
 <body>
 
-  <!-- LOGIN OVERLAY -->
+  <!-- AUTHENTICATION OVERLAY -->
   <div id="authOverlay">
     <div class="auth-card">
-      <div class="noon-logo">noon</div>
-      <div class="auth-title">MINUTES OPS Access Gate</div>
-      <input type="email" id="authEmailInput" placeholder="Email Address (e.g. admin@noon.com)" autocomplete="off">
-      <input type="password" id="authPasscodeInput" placeholder="Personal Passcode" maxlength="30" onkeypress="handleAuthKey(event)">
-      <button onclick="validateLogin()">LOGIN TO SYSTEM</button>
-      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Password? Request Reset</div>
-      <div class="auth-error" id="authErrorMsg">⚠️ Invalid Email, Disabled Account or Wrong Passcode.</div>
+      <div class="auth-brand">
+        <span class="noon-txt">noon</span>
+        <span class="ops-badge">MINUTES OPS</span>
+      </div>
+      <p class="auth-sub">Operations Command & Intelligence Portal</p>
+      
+      <div class="input-field-group">
+        <label>Work Email Address</label>
+        <input type="email" id="authEmailInput" placeholder="name@noon.com" autocomplete="off">
+      </div>
+
+      <div class="input-field-group">
+        <label>Security Passcode</label>
+        <input type="password" id="authPasscodeInput" placeholder="••••••••" maxlength="30" onkeypress="handleAuthKey(event)">
+      </div>
+
+      <button class="btn-login-submit" onclick="validateLogin()">Login to Portal ➔</button>
+      
+      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Security Passcode?</div>
+      <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled account.</div>
     </div>
   </div>
 
   <!-- FORGOT PASSWORD MODAL -->
   <div id="forgetModal" style="display: none;">
     <div class="auth-card">
-      <div style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">🔐 Request Password Reset</div>
-      <p style="font-size: 12px; color: #a0aec0; margin-bottom: 16px;">Enter your registered email below.</p>
-      <input type="email" id="forgetEmailInput" placeholder="Your Registered Email Address">
-      <button onclick="submitPasswordResetRequest()">SEND RESET REQUEST</button>
-      <div class="forget-link" onclick="toggleForgetModal(false)">Back to Login</div>
+      <div class="auth-brand">
+        <span class="noon-txt">noon</span>
+        <span class="ops-badge">RESET</span>
+      </div>
+      <p class="auth-sub">Enter your email address to request a new passcode from Master Admin.</p>
+      
+      <div class="input-field-group">
+        <label>Registered Email</label>
+        <input type="email" id="forgetEmailInput" placeholder="name@noon.com">
+      </div>
+
+      <button class="btn-login-submit" onclick="submitPasswordResetRequest()">Send Reset Request</button>
+      <div class="forget-link" onclick="toggleForgetModal(false)">← Back to Login</div>
     </div>
   </div>
 
@@ -45,14 +66,17 @@
       <span class="ops-badge">MINUTES OPS</span>
     </div>
 
+    <!-- DYNAMIC NAV TABS -->
     <div class="nav-tabs" id="navbarTabs"></div>
 
     <div style="display:flex; align-items:center; gap:12px;">
       <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙 Dark Mode</button>
+      
       <div class="user-pill" id="userPill">
         <span id="userPillEmail">user@noon.com</span>
         <span class="badge-role" id="userPillRole">USER</span>
       </div>
+
       <button class="btn btn-red" onclick="logoutSession()" style="padding: 6px 12px; font-size:11px;">🔒 Lock System</button>
     </div>
   </header>
@@ -60,7 +84,7 @@
   <div class="main-view-content">
     
     <!-- VIEW 1: PALLET BARCODE STUDIO -->
-    <div id="barcodeStudioView" class="tab-view">
+    <div id="barcodeStudioView" class="tab-view active">
       <div class="studio-container">
         <aside class="sidebar" id="studioSidebar">
           <div class="form-group">
