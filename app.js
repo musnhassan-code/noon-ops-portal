@@ -178,7 +178,7 @@ function setupUserInterface(user) {
   }
 }
 
-/* TAB NAVIGATION (PREVENTS WHITE SCREEN) */
+/* TAB NAVIGATION SYSTEM (PREVENTS WHITE SCREEN & ENABLES BARCODE STUDIO) */
 function buildDynamicNavTabs(user) {
   const navContainer = document.getElementById('navbarTabs');
   if (!navContainer) return;
@@ -235,7 +235,9 @@ function switchMainTab(targetId) {
     }
   });
 
-  if (targetId === 'dataEntry' && !globalDataEntryRaw.length) {
+  if (targetId === 'barcodeStudio') {
+    generateBatch();
+  } else if (targetId === 'dataEntry' && !globalDataEntryRaw.length) {
     fetchGoogleSheetData();
   } else if (targetId === 'adminTab') {
     renderAdminUserTable();
@@ -246,10 +248,202 @@ function switchMainTab(targetId) {
 
 function logoutSession() {
   sessionStorage.removeItem('noon_ops_auth_user');
+  sessionStorage.removeItem('noon_ops_current_telemetry');
   location.reload();
 }
 
-/* SAFE NUMBER PARSER (PREVENTS BROKEN DASHBOARD) */
+/* FORGOT PASSWORD MODAL FLOW */
+function toggleForgetModal(show) {
+  document.getElementById('forgetModal').style.display = show ? 'flex' : 'none';
+}
+
+function submitPasswordResetRequest() {
+  const email = document.getElementById('forgetEmailInput').value.trim().toLowerCase();
+  if (!email) return alert('Please enter a valid email address!');
+
+  let reqs = JSON.parse(localStorage.getItem('noon_ops_reset_requests') || "[]");
+  reqs.push({ email: email, requestTime: new Date().toLocaleTimeString() + ' (' + new Date().toLocaleDateString() + ')' });
+  localStorage.setItem('noon_ops_reset_requests', JSON.stringify(reqs));
+
+  alert('Password reset request submitted successfully!');
+  toggleForgetModal(false);
+}
+
+function renderResetRequestsTable() {
+  const reqs = JSON.parse(localStorage.getItem('noon_ops_reset_requests') || "[]");
+  const tbody = document.getElementById('resetRequestsTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = '';
+
+  if (reqs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" class="empty-msg">No pending password reset requests.</td></tr>`;
+    return;
+  }
+
+  reqs.forEach((r, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${r.email}</strong></td>
+      <td>${r.requestTime}</td>
+      <td><button class="btn btn-green" style="padding:4px 8px; font-size:10px;" onclick="fulfillResetRequest('${r.email}', ${idx})">🔑 Reset Passcode</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function fulfillResetRequest(email, index) {
+  const newPass = prompt(`Enter New Passcode for ${email}:`, "Pass" + Math.floor(1000 + Math.random() * 9000));
+  if (!newPass) return;
+
+  let users = getStoredUsers();
+  let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+  if (user) {
+    user.passcode = newPass;
+    saveStoredUsers(users);
+
+    let reqs = JSON.parse(localStorage.getItem('noon_ops_reset_requests') || "[]");
+    reqs.splice(index, 1);
+    localStorage.setItem('noon_ops_reset_requests', JSON.stringify(reqs));
+
+    const subject = encodeURIComponent("Your Password Reset Credentials");
+    const body = encodeURIComponent(`Hello,\n\nYour password reset request has been fulfilled.\n\nURL: ${window.location.href}\nEmail: ${email}\nNew Passcode: ${newPass}`);
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+
+    renderAdminUserTable();
+    renderResetRequestsTable();
+    alert(`New Passcode generated for ${email}!`);
+  }
+}
+
+/* ADMIN PANEL TELEMETRY LOGS */
+function renderAdminTelemetryTable() {
+  const tbody = document.getElementById('adminTelemetryTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const liveSessions = JSON.parse(localStorage.getItem('noon_ops_live_telemetry') || "[]");
+  const now = Date.now();
+
+  const activeCount = liveSessions.filter(s => (now - s.lastPingTimestamp) < 12000).length;
+  if (document.getElementById('adminStatActiveSessions')) {
+    document.getElementById('adminStatActiveSessions').innerText = activeCount;
+  }
+
+  if (liveSessions.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-msg">No session telemetry recorded yet.</td></tr>`;
+    return;
+  }
+
+  liveSessions.forEach((session) => {
+    const isLive = (now - session.lastPingTimestamp) < 12000;
+    const statusBadge = isLive 
+      ? `<span class="badge-status" style="background:#dcfce7; color:#15803d; font-weight:900;">🟢 LIVE ONLINE</span>`
+      : `<span class="badge-alert" style="background:#f3f4f6; color:#64748b;">🔴 OFFLINE</span>`;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${session.email}</strong></td>
+      <td>${statusBadge}</td>
+      <td><strong style="color:var(--blue-accent);">${session.deviceType}</strong></td>
+      <td><strong>${session.deviceModel}</strong></td>
+      <td>${session.browser}</td>
+      <td>${session.screen} (${session.orientation})</td>
+      <td><strong style="color:var(--green-accent);">${session.lastActiveTime}</strong></td>
+      <td><span class="badge-role">${session.role}</span></td>
+      <td><button class="btn btn-red" style="padding:3px 6px; font-size:10px;" onclick="forceKickUser('${session.email}')">🚫 Kick</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function forceKickUser(email) {
+  let logs = JSON.parse(localStorage.getItem('noon_ops_live_telemetry') || "[]");
+  logs = logs.filter(l => l.email !== email);
+  localStorage.setItem('noon_ops_live_telemetry', JSON.stringify(logs));
+  renderAdminTelemetryTable();
+  alert(`Session for ${email} terminated!`);
+}
+
+function renderAdminUserTable() {
+  const users = getStoredUsers();
+  const tbody = document.getElementById('adminUserTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (document.getElementById('adminStatUserCount')) document.getElementById('adminStatUserCount').innerText = users.length;
+  if (document.getElementById('adminStatActiveAdmins')) document.getElementById('adminStatActiveAdmins').innerText = users.filter(u => u.role === 'ADMIN').length;
+
+  users.forEach((u, index) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${u.email}</strong></td>
+      <td><code style="background:var(--border-color); padding:2px 6px; border-radius:4px;">${u.passcode}</code></td>
+      <td><span class="badge-role">${u.role}</span></td>
+      <td><span class="telemetry-code">${(u.tabs || []).join(', ')}</span></td>
+      <td><span class="${u.status === 'ACTIVE' ? 'badge-status' : 'badge-alert'}">${u.status}</span></td>
+      <td><button class="btn btn-dark" style="padding:4px 8px; font-size:10px;" onclick="toggleUserStatus(${index})">${u.status === 'ACTIVE' ? '⏸️ Disable' : '▶️ Activate'}</button></td>
+      <td><button class="btn btn-red" style="padding:4px 8px; font-size:10px;" onclick="deleteUser(${index})">🗑️ Revoke</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const cfgSheet = document.getElementById('cfgSheetIdInput');
+  if(cfgSheet) cfgSheet.value = SHEET_ID;
+  const cfgGid = document.getElementById('cfgGidInput');
+  if(cfgGid) cfgGid.value = GID_ID;
+}
+
+function toggleUserStatus(index) {
+  let users = getStoredUsers();
+  users[index].status = (users[index].status === 'ACTIVE') ? 'DISABLED' : 'ACTIVE';
+  saveStoredUsers(users);
+  renderAdminUserTable();
+}
+
+function registerUserByAdmin() {
+  const email = document.getElementById('newAdminEmail').value.trim();
+  const passcode = document.getElementById('newAdminPasscode').value.trim();
+  const role = document.getElementById('newAdminRole').value;
+
+  let tabs = [];
+  if (document.getElementById('accessBarcode').checked) tabs.push('barcode');
+  if (document.getElementById('accessPace').checked) tabs.push('pace');
+  if (document.getElementById('accessTrips').checked) tabs.push('trips');
+  if (role === 'ADMIN') tabs.push('admin');
+
+  if (!email || !passcode) return alert('Please enter valid email and passcode!');
+
+  const users = getStoredUsers();
+  users.push({ email: email, passcode: passcode, role: role, tabs: tabs, status: "ACTIVE" });
+  saveStoredUsers(users);
+  renderAdminUserTable();
+
+  const subject = encodeURIComponent("Your Access Credentials for noon MINUTES OPS Portal");
+  const body = encodeURIComponent(`Hello,\n\nYou have been granted access to noon MINUTES OPS Portal.\n\nPortal URL: ${window.location.href}\nYour Registered Email: ${email}\nYour Personal Passcode: ${passcode}\nAllowed Access Tabs: ${tabs.join(', ')}\n\nRegards,\nMaster Admin Control Center`);
+  window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+
+  document.getElementById('newAdminEmail').value = '';
+  document.getElementById('newAdminPasscode').value = '';
+  alert(`User ${email} granted access! 🚀`);
+}
+
+function deleteUser(index) {
+  let users = getStoredUsers();
+  if (users.length <= 1) return alert('Cannot delete the last remaining user account!');
+  users.splice(index, 1);
+  saveStoredUsers(users);
+  renderAdminUserTable();
+}
+
+function saveSheetConfig() {
+  SHEET_ID = document.getElementById('cfgSheetIdInput').value.trim();
+  GID_ID = document.getElementById('cfgGidInput').value.trim();
+  fetchGoogleSheetData();
+  alert('Google Sheet Configuration Updated!');
+}
+
+/* SAFE NUMBER PARSER */
 function parseCleanNumber(val) {
   if (val === null || val === undefined) return 0;
   let cleanStr = String(val).replace(/,/g, '').replace(/[^0-9.-]/g, '').trim();
@@ -257,7 +451,7 @@ function parseCleanNumber(val) {
   return isNaN(num) ? 0 : num;
 }
 
-/* GOOGLE SHEETS LIVE DATA ENGINE */
+/* GOOGLE SHEETS ENGINE */
 let SHEET_ID = '1IRBTF7ijjyqb5JYLHYBhHVr94vm1hwyH0t9l9sxooQw';
 let GID_ID = '1034377000';
 let globalDataEntryRaw = [];
@@ -547,189 +741,80 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
   }
 }
 
-/* ADMIN PANEL TELEMETRY LOGS */
-function renderAdminTelemetryTable() {
-  const tbody = document.getElementById('adminTelemetryTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
+/* BARCODE GENERATOR FUNCTIONS */
+function toggleSidebar() {
+  const sidebar = document.getElementById('studioSidebar');
+  const icon = document.getElementById('toggleIcon');
+  if(sidebar) sidebar.classList.toggle('collapsed');
+  if(icon) icon.innerText = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+}
 
-  const liveSessions = JSON.parse(localStorage.getItem('noon_ops_live_telemetry') || "[]");
-  const now = Date.now();
+function detectAlgorithmType(code) {
+  if (code.startsWith('FPI')) return 'PALLET';
+  if (code.startsWith('TGI') && code.charAt(7) === 'G') return 'GLOBAL TOTE';
+  if (code.startsWith('TGI') && code.charAt(7) === 'H') return 'GLOBAL TOTE MINS';
+  return 'STAGING';
+}
 
-  const activeCount = liveSessions.filter(s => (now - s.lastPingTimestamp) < 12000).length;
-  if (document.getElementById('adminStatActiveSessions')) {
-    document.getElementById('adminStatActiveSessions').innerText = activeCount;
-  }
+function generateBatch() {
+  const grid = document.getElementById('labelsGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
 
-  if (liveSessions.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-msg">No session telemetry recorded yet.</td></tr>`;
-    return;
-  }
+  const zoneText = document.getElementById('statZoneText') ? document.getElementById('statZoneText').innerText : 'AMB';
+  const warehouseSelect = document.getElementById('warehouseSelect');
+  const warehouseText = warehouseSelect ? warehouseSelect.value : 'CAIIDO1';
+  const symbologySelect = document.getElementById('symbologySelect');
+  const format = symbologySelect ? symbologySelect.value : 'CODE128';
+  const codeListInput = document.getElementById('codeListInput');
+  const rawInput = codeListInput ? codeListInput.value : '';
+  
+  const codes = rawInput.split('\n').map(c => c.trim().toUpperCase()).filter(c => c.length > 0);
+  if(document.getElementById('labelCount')) document.getElementById('labelCount').innerText = codes.length;
 
-  liveSessions.forEach((session) => {
-    const isLive = (now - session.lastPingTimestamp) < 12000;
-    const statusBadge = isLive 
-      ? `<span class="badge-status" style="background:#dcfce7; color:#15803d; font-weight:900;">🟢 LIVE ONLINE</span>`
-      : `<span class="badge-alert" style="background:#f3f4f6; color:#64748b;">🔴 OFFLINE</span>`;
+  if (codes.length === 0) return;
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${session.email}</strong></td>
-      <td>${statusBadge}</td>
-      <td><strong style="color:var(--blue-accent);">${session.deviceType}</strong></td>
-      <td><strong>${session.deviceModel}</strong></td>
-      <td>${session.browser}</td>
-      <td>${session.screen} (${session.orientation})</td>
-      <td><strong style="color:var(--green-accent);">${session.lastActiveTime}</strong></td>
-      <td><span class="badge-role">${session.role}</span></td>
-      <td><button class="btn btn-red" style="padding:3px 6px; font-size:10px;" onclick="forceKickUser('${session.email}')">🚫 Kick</button></td>
+  codes.forEach((code, i) => {
+    const elemId = `render-target-${i}`;
+    const labelAlgoTag = detectAlgorithmType(code);
+    let renderTag = ['CODE128', 'CODE39', 'EAN13'].includes(format) ? `<svg id="${elemId}"></svg>` : `<canvas id="${elemId}"></canvas>`;
+
+    const cardHTML = `
+      <div class="label-card" data-code="${code}" style="animation-delay: ${i * 0.03}s">
+        <div class="label-header">
+          <div class="brand-mini">
+            <div class="noon-txt">noon</div>
+            <div class="min-tag">MINUTES</div>
+          </div>
+          <div class="header-center"><span class="wh-badge">${warehouseText}</span></div>
+          <div class="label-info">
+            <span class="algo-type-tag">${labelAlgoTag}</span>
+            <div class="zone-lbl">${zoneText}</div>
+          </div>
+        </div>
+        <div class="code-container">${renderTag}</div>
+        <div class="code-footer-wrap">
+          <span class="tech-hash">#${(i+1).toString().padStart(3, '0')}</span>
+          <span class="code-text-footer">${code}</span>
+          <span class="tech-hash">EG</span>
+        </div>
+      </div>
     `;
-    tbody.appendChild(tr);
+
+    grid.insertAdjacentHTML('beforeend', cardHTML);
+
+    try {
+      if (['CODE128', 'CODE39', 'EAN13'].includes(format)) {
+        JsBarcode(`#${elemId}`, code, { format: format, displayValue: false, margin: 0, height: 45, width: 1.6 });
+      } else if (format === 'QR') {
+        bwipjs.toCanvas(elemId, { bcid: 'qrcode', text: code, scale: 3 });
+      } else if (format === 'DATAMATRIX') {
+        bwipjs.toCanvas(elemId, { bcid: 'datamatrix', text: code, scale: 2 });
+      } else if (format === 'PDF417') {
+        bwipjs.toCanvas(elemId, { bcid: 'pdf417', text: code, scale: 2 });
+      }
+    } catch (e) { console.error(e); }
   });
-}
-
-function forceKickUser(email) {
-  let logs = JSON.parse(localStorage.getItem('noon_ops_live_telemetry') || "[]");
-  logs = logs.filter(l => l.email !== email);
-  localStorage.setItem('noon_ops_live_telemetry', JSON.stringify(logs));
-  renderAdminTelemetryTable();
-  alert(`Session for ${email} terminated!`);
-}
-
-function renderAdminUserTable() {
-  const users = getStoredUsers();
-  const tbody = document.getElementById('adminUserTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  if (document.getElementById('adminStatUserCount')) document.getElementById('adminStatUserCount').innerText = users.length;
-  if (document.getElementById('adminStatActiveAdmins')) document.getElementById('adminStatActiveAdmins').innerText = users.filter(u => u.role === 'ADMIN').length;
-
-  users.forEach((u, index) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${u.email}</strong></td>
-      <td><code style="background:var(--border-color); padding:2px 6px; border-radius:4px;">${u.passcode}</code></td>
-      <td><span class="badge-role">${u.role}</span></td>
-      <td><span class="telemetry-code">${(u.tabs || []).join(', ')}</span></td>
-      <td><span class="${u.status === 'ACTIVE' ? 'badge-status' : 'badge-alert'}">${u.status}</span></td>
-      <td><button class="btn btn-dark" style="padding:4px 8px; font-size:10px;" onclick="toggleUserStatus(${index})">${u.status === 'ACTIVE' ? '⏸️ Disable' : '▶️ Activate'}</button></td>
-      <td><button class="btn btn-red" style="padding:4px 8px; font-size:10px;" onclick="deleteUser(${index})">🗑️ Revoke</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function toggleUserStatus(index) {
-  let users = getStoredUsers();
-  users[index].status = (users[index].status === 'ACTIVE') ? 'DISABLED' : 'ACTIVE';
-  saveStoredUsers(users);
-  renderAdminUserTable();
-}
-
-function registerUserByAdmin() {
-  const email = document.getElementById('newAdminEmail').value.trim();
-  const passcode = document.getElementById('newAdminPasscode').value.trim();
-  const role = document.getElementById('newAdminRole').value;
-
-  let tabs = [];
-  if (document.getElementById('accessBarcode').checked) tabs.push('barcode');
-  if (document.getElementById('accessPace').checked) tabs.push('pace');
-  if (document.getElementById('accessTrips').checked) tabs.push('trips');
-  if (role === 'ADMIN') tabs.push('admin');
-
-  if (!email || !passcode) return alert('Please enter valid email and passcode!');
-
-  const users = getStoredUsers();
-  users.push({ email: email, passcode: passcode, role: role, tabs: tabs, status: "ACTIVE" });
-  saveStoredUsers(users);
-  renderAdminUserTable();
-
-  const subject = encodeURIComponent("Your Access Credentials for noon MINUTES OPS Portal");
-  const body = encodeURIComponent(`Hello,\n\nYou have been granted access to noon MINUTES OPS Portal.\n\nPortal URL: ${window.location.href}\nYour Registered Email: ${email}\nYour Personal Passcode: ${passcode}\nAllowed Access Tabs: ${tabs.join(', ')}\n\nRegards,\nMaster Admin Control Center`);
-  window.open(`mailto:${email}?subject=${subject}&body=${body}`);
-
-  document.getElementById('newAdminEmail').value = '';
-  document.getElementById('newAdminPasscode').value = '';
-  alert(`User ${email} granted access! 🚀`);
-}
-
-function deleteUser(index) {
-  let users = getStoredUsers();
-  if (users.length <= 1) return alert('Cannot delete the last remaining user account!');
-  users.splice(index, 1);
-  saveStoredUsers(users);
-  renderAdminUserTable();
-}
-
-function saveSheetConfig() {
-  SHEET_ID = document.getElementById('cfgSheetIdInput').value.trim();
-  GID_ID = document.getElementById('cfgGidInput').value.trim();
-  fetchGoogleSheetData();
-  alert('Google Sheet Configuration Updated!');
-}
-
-function toggleForgetModal(show) {
-  document.getElementById('forgetModal').style.display = show ? 'flex' : 'none';
-}
-
-function submitPasswordResetRequest() {
-  const email = document.getElementById('forgetEmailInput').value.trim().toLowerCase();
-  if (!email) return alert('Please enter a valid email address!');
-
-  let reqs = JSON.parse(localStorage.getItem('noon_ops_reset_requests') || "[]");
-  reqs.push({ email: email, requestTime: new Date().toLocaleTimeString() + ' (' + new Date().toLocaleDateString() + ')' });
-  localStorage.setItem('noon_ops_reset_requests', JSON.stringify(reqs));
-
-  alert('Password reset request submitted successfully!');
-  toggleForgetModal(false);
-}
-
-function renderResetRequestsTable() {
-  const reqs = JSON.parse(localStorage.getItem('noon_ops_reset_requests') || "[]");
-  const tbody = document.getElementById('resetRequestsTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  if (reqs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" class="empty-msg">No pending password reset requests.</td></tr>`;
-    return;
-  }
-
-  reqs.forEach((r, idx) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${r.email}</strong></td>
-      <td>${r.requestTime}</td>
-      <td><button class="btn btn-green" style="padding:4px 8px; font-size:10px;" onclick="fulfillResetRequest('${r.email}', ${idx})">🔑 Reset Passcode</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function fulfillResetRequest(email, index) {
-  const newPass = prompt(`Enter New Passcode for ${email}:`, "Pass" + Math.floor(1000 + Math.random() * 9000));
-  if (!newPass) return;
-
-  let users = getStoredUsers();
-  let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-  if (user) {
-    user.passcode = newPass;
-    saveStoredUsers(users);
-
-    let reqs = JSON.parse(localStorage.getItem('noon_ops_reset_requests') || "[]");
-    reqs.splice(index, 1);
-    localStorage.setItem('noon_ops_reset_requests', JSON.stringify(reqs));
-
-    const subject = encodeURIComponent("Your Password Reset Credentials");
-    const body = encodeURIComponent(`Hello,\n\nYour password reset request has been fulfilled.\n\nURL: ${window.location.href}\nEmail: ${email}\nNew Passcode: ${newPass}`);
-    window.open(`mailto:${email}?subject=${subject}&body=${body}`);
-
-    renderAdminUserTable();
-    renderResetRequestsTable();
-    alert(`New Passcode generated for ${email}!`);
-  }
 }
 
 /* INITIALIZATION ON LOAD */
