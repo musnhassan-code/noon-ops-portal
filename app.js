@@ -1,4 +1,4 @@
-/* THEME MODE MANAGEMENT (LIGHT / DARK) */
+/* THEME MANAGEMENT */
 function initTheme() {
   const savedTheme = localStorage.getItem('noon_ops_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
@@ -15,12 +15,10 @@ function toggleTheme() {
 
 function updateThemeButtonText(theme) {
   const btn = document.getElementById('themeToggleBtn');
-  if (btn) {
-    btn.innerHTML = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
-  }
+  if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
 }
 
-/* SECURITY & USER ACCESS DATABASE CONFIGURATION */
+/* USER DATABASE */
 let defaultUsers = [
   { email: "admin@noon.com", passcode: "admin123", role: "ADMIN", tabs: ["barcode", "pace", "trips", "admin"], status: "ACTIVE" },
   { email: "musnhassan@noon.com", passcode: "1234", role: "USER", tabs: ["barcode", "pace", "trips"], status: "ACTIVE" },
@@ -75,16 +73,16 @@ function captureDeviceTelemetry(user) {
   localStorage.setItem('noon_ops_telemetry_logs', JSON.stringify(logs));
 }
 
+/* AUTHENTICATION CONTROL */
 function checkAuthSession() {
   const activeSession = sessionStorage.getItem('noon_ops_auth_user');
   if (activeSession) {
     const user = JSON.parse(activeSession);
-    
     const userDb = getStoredUsers();
     const currentUserState = userDb.find(u => u.email.toLowerCase() === user.email.toLowerCase());
 
     if (!currentUserState || currentUserState.status !== "ACTIVE") {
-      alert('⚠️ Your account has been disabled or revoked by Master Admin.');
+      alert('⚠️ Account disabled or revoked.');
       logoutSession();
       return;
     }
@@ -134,7 +132,7 @@ function setupUserInterface(user) {
   }
 }
 
-/* DYNAMIC NAV TABS GENERATOR (SOLVES WHITE SCREEN) */
+/* TAB NAVIGATION SYSTEM (PREVENTS WHITE SCREEN) */
 function buildDynamicNavTabs(user) {
   const navContainer = document.getElementById('navbarTabs');
   if (!navContainer) return;
@@ -165,13 +163,12 @@ function buildDynamicNavTabs(user) {
   });
 
   if (allowedKeys.length > 0) {
-    const firstTabTarget = tabDefinitions[allowedKeys[0]].target;
-    switchMainTab(firstTabTarget);
+    switchMainTab(tabDefinitions[allowedKeys[0]].target);
   }
 }
 
-/* SWITCH TAB LOGIC (SOLVES WHITE SCREEN) */
 function switchMainTab(targetId) {
+  // Hide all Views
   document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
 
@@ -211,7 +208,7 @@ function logoutSession() {
   location.reload();
 }
 
-/* FORGOT PASSWORD FLOW */
+/* FORGOT PASSWORD MODAL FLOW */
 function toggleForgetModal(show) {
   document.getElementById('forgetModal').style.display = show ? 'flex' : 'none';
 }
@@ -255,7 +252,7 @@ function renderResetRequestsTable() {
       <td><strong>${r.email}</strong></td>
       <td>${r.requestTime}</td>
       <td>
-        <button class="btn btn-green" style="padding:4px 8px; font-size:10px;" onclick="fulfillResetRequest('${r.email}', ${idx})">🔑 Generate & Dispatch New Passcode</button>
+        <button class="btn btn-green" style="padding:4px 8px; font-size:10px;" onclick="fulfillResetRequest('${r.email}', ${idx})">🔑 Generate New Passcode</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -287,7 +284,7 @@ function fulfillResetRequest(email, index) {
   }
 }
 
-/* ADMIN CONTROL PANEL FUNCTIONS */
+/* ADMIN PANEL CONTROL FUNCTIONS */
 function renderAdminTelemetryTable() {
   const telemetryLogs = JSON.parse(localStorage.getItem('noon_ops_telemetry_logs') || "[]");
   const tbody = document.getElementById('adminTelemetryTableBody');
@@ -728,7 +725,7 @@ function generateBatch() {
   });
 }
 
-/* INITIALIZE ON PAGE LOAD */
+/* INITIALIZE ON LOAD */
 window.onload = function() {
   initTheme();
   checkAuthSession();
