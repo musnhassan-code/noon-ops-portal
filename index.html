@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>noon MINUTES OPS | Executive Command Center</title>
+  <title>noon MINUTES OPS | Portal Command Center</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -14,13 +14,14 @@
 </head>
 <body>
 
-  <!-- AUTHENTICATION OVERLAY -->
+  <!-- HIGH-END AUTHENTICATION OVERLAY WITH ANIMATED NOON JUMBO TRUCK -->
   <div id="authOverlay">
     <div class="speed-grid-lines"></div>
 
-    <!-- MAIN JUMBO TRUCK ANIMATION -->
+    <!-- ANIMATED REALISTIC NOON MINUTES JUMBO TRUCK -->
     <div class="jumbo-truck-container">
       <div class="jumbo-truck">
+        <!-- TRUCK CARGO CONTAINER (LEFT SIDE) -->
         <div class="truck-container-box">
           <div class="container-graphics">
             <div class="stripe-red"></div>
@@ -34,13 +35,16 @@
           </div>
         </div>
 
+        <!-- TRUCK CABIN (RIGHT SIDE - FRONT DIRECTION) -->
         <div class="truck-cabin">
           <div class="cabin-window"></div>
           <div class="cabin-headlight"></div>
         </div>
 
+        <!-- UNDERGLOW LEDS -->
         <div class="underglow-leds"></div>
 
+        <!-- WHEELS -->
         <div class="truck-wheel wheel-back-1"></div>
         <div class="truck-wheel wheel-back-2"></div>
         <div class="truck-wheel wheel-front"></div>
@@ -48,6 +52,7 @@
       <div class="truck-road-line"></div>
     </div>
 
+    <!-- LOGIN FORM CARD -->
     <div class="auth-card">
       <div class="auth-brand">
         <span class="noon-txt">noon</span>
@@ -56,7 +61,7 @@
       <p class="auth-sub">Operations Intelligence & Fleet Dispatch Portal</p>
       
       <div class="input-field-group">
-        <label>Work Email Address</label>
+        <label>Corporate Work Email</label>
         <input type="email" id="authEmailInput" placeholder="name@noon.com" autocomplete="off">
       </div>
 
@@ -65,9 +70,9 @@
         <input type="password" id="authPasscodeInput" placeholder="••••••••" maxlength="30" onkeypress="handleAuthKey(event)">
       </div>
 
-      <button class="btn-login-submit" onclick="validateLogin()">Login to Portal ➔</button>
+      <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
       
-      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Password? Request Reset</div>
+      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Security Passcode?</div>
       <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
     </div>
   </div>
@@ -91,16 +96,16 @@
     </div>
   </div>
 
-  <!-- INTERACTIVE TRIP DETAILS MODAL (WITH LIVE ANIMATED VAN ON MAP) -->
+  <!-- INTERACTIVE TRIP DETAILS MODAL -->
   <div id="tripDetailModal" class="modal-overlay" style="display: none;">
     <div class="trip-modal-card">
       <button class="modal-close-btn" onclick="closeTripModal()">✕</button>
       
       <div class="trip-modal-header">
         <div class="trip-title-wrap">
-          <span class="trip-breadcrumb">Dispatch Historical ❯ <strong id="mTripIdHeader">TR-20260803-30FB33F1</strong></span>
+          <span class="trip-breadcrumb">Dispatch Historical ❯ <strong id="mTripIdHeader">-</strong></span>
           <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
-            <h2 id="mTripIdTitle">TR-20260803-30FB33F1</h2>
+            <h2 id="mTripIdTitle">-</h2>
             <span class="badge-status" style="background:#dcfce7; color:#166534;">Dispatched Live</span>
           </div>
         </div>
@@ -109,15 +114,15 @@
       <div class="trip-meta-grid">
         <div class="meta-box">
           <div class="meta-lbl">Vehicle Number</div>
-          <div class="meta-val" id="mVehicleNo">SUNCAI7387</div>
+          <div class="meta-val" id="mVehicleNo">-</div>
         </div>
         <div class="meta-box">
           <div class="meta-lbl">Driver Name</div>
-          <div class="meta-val" id="mDriverName">sun001ibr</div>
+          <div class="meta-val" id="mDriverName">-</div>
         </div>
         <div class="meta-box">
           <div class="meta-lbl">Trip Date</div>
-          <div class="meta-val" id="mCreatedDate">2026-08-04</div>
+          <div class="meta-val" id="mCreatedDate">-</div>
         </div>
         <div class="meta-box">
           <div class="meta-lbl">Total Load Metrics</div>
@@ -133,16 +138,12 @@
           <!-- LIVE ANIMATED ROUTE MAP -->
           <div class="map-visual-box" id="mapVisualBox">
             <div class="map-path-line"></div>
-            <!-- ANIMATED MINI VAN ON MAP -->
             <div class="map-mini-van">
               <div class="mini-van-body">noon</div>
             </div>
-            <!-- DYNAMIC STOPS NODES WILL BE INJECTED HERE -->
           </div>
 
-          <ul class="timeline-list" id="mTimelineList">
-            <!-- DYNAMIC TIMELINE STOPS -->
-          </ul>
+          <ul class="timeline-list" id="mTimelineList"></ul>
         </div>
 
         <!-- RIGHT: PALLETS & TOTES BREAKDOWN -->
@@ -152,9 +153,7 @@
             <span id="mPalletCountTag" class="badge-role" style="background:var(--primary-red); font-size:10px;">0 Barcodes</span>
           </div>
 
-          <div class="pallet-items-list" id="mPalletsList">
-            <!-- DYNAMIC PALLET ITEMS -->
-          </div>
+          <div class="pallet-items-list" id="mPalletsList"></div>
         </div>
       </div>
     </div>
@@ -553,14 +552,14 @@ TGI83K1H6MMBEG</textarea>
 
           <div class="analytics-card">
             <h3>
-              <span>🚚 Driver Fleet Metrics (إجمالي الحمولات والفروع اليوم)</span>
+              <span>🚚 Driver Fleet Metrics</span>
               <small style="color: var(--text-muted);" id="deDriverCountLbl">0 Drivers</small>
             </h3>
             <table class="mini-table">
               <thead>
                 <tr>
                   <th>Driver / Vehicle</th>
-                  <th>Stores (فروع)</th>
+                  <th>Stores</th>
                   <th>Pallets / Totes</th>
                   <th>Qty Dispatched</th>
                   <th>Inspect</th>
@@ -691,7 +690,7 @@ TGI83K1H6MMBEG</textarea>
             </div>
 
             <div class="form-group">
-              <label>Allowed Tabs Permissions (التابات المتاحة)</label>
+              <label>Allowed Tabs Permissions</label>
               <div class="checkbox-group">
                 <label><input type="checkbox" id="accessBarcode" checked> Pallet Barcode Studio</label>
                 <label><input type="checkbox" id="accessPace" checked> Pace Picking Uploader</label>
@@ -718,7 +717,7 @@ TGI83K1H6MMBEG</textarea>
 
         <div class="table-card">
           <div style="padding:14px 18px; font-weight:800; font-size:13px; border-bottom:1px solid var(--border-color); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
-            <span>📡 Live Active Sessions Telemetry (تتبع الأجهزة والدخول الحى)</span>
+            <span>📡 Live Active Sessions Telemetry</span>
             <button class="btn btn-dark" style="padding: 4px 10px; font-size:11px;" onclick="renderAdminTelemetryTable()">🔄 Refresh Telemetry</button>
           </div>
           <div class="table-container">
