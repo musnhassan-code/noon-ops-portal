@@ -18,6 +18,7 @@
   <div id="authOverlay">
     <div class="speed-grid-lines"></div>
 
+    <!-- MAIN JUMBO TRUCK ANIMATION -->
     <div class="jumbo-truck-container">
       <div class="jumbo-truck">
         <div class="truck-container-box">
@@ -90,17 +91,17 @@
     </div>
   </div>
 
-  <!-- TRIP DETAILS MODAL (EXACT NOON DESIGN) -->
+  <!-- INTERACTIVE TRIP DETAILS MODAL (WITH LIVE ANIMATED VAN ON MAP) -->
   <div id="tripDetailModal" class="modal-overlay" style="display: none;">
     <div class="trip-modal-card">
       <button class="modal-close-btn" onclick="closeTripModal()">✕</button>
       
       <div class="trip-modal-header">
         <div class="trip-title-wrap">
-          <span class="trip-breadcrumb">Trips ❯ <strong id="mTripIdHeader">TR-20260803-30FB33F1</strong></span>
+          <span class="trip-breadcrumb">Dispatch Historical ❯ <strong id="mTripIdHeader">TR-20260803-30FB33F1</strong></span>
           <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
             <h2 id="mTripIdTitle">TR-20260803-30FB33F1</h2>
-            <span class="badge-status" style="background:#dcfce7; color:#166534;">Completed</span>
+            <span class="badge-status" style="background:#dcfce7; color:#166534;">Dispatched Live</span>
           </div>
         </div>
       </div>
@@ -115,82 +116,44 @@
           <div class="meta-val" id="mDriverName">sun001ibr</div>
         </div>
         <div class="meta-box">
-          <div class="meta-lbl">Created On</div>
-          <div class="meta-val" id="mCreatedDate">04 Aug 2026, 01:11 AM</div>
+          <div class="meta-lbl">Trip Date</div>
+          <div class="meta-val" id="mCreatedDate">2026-08-04</div>
         </div>
         <div class="meta-box">
-          <div class="meta-lbl">Total Pallets / Totes</div>
-          <div class="meta-val" id="mTotalPallets">13 Pallets</div>
+          <div class="meta-lbl">Total Load Metrics</div>
+          <div class="meta-val" id="mTotalPallets">0 Totes</div>
         </div>
       </div>
 
       <div class="trip-body-grid">
-        <!-- LEFT: TIMELINE & MAP ROUTE -->
+        <!-- LEFT: TIMELINE & LIVE MAP ROUTE WITH ANIMATED VAN -->
         <div class="timeline-card">
-          <div class="card-sec-title">📍 Trip Timeline & Route Map</div>
+          <div class="card-sec-title">📍 Live Driver Route Map & Timeline</div>
           
-          <!-- MAP ROUTE VISUALIZER -->
+          <!-- LIVE ANIMATED ROUTE MAP -->
           <div class="map-visual-box" id="mapVisualBox">
             <div class="map-path-line"></div>
-            <div class="map-node node-start"><span>CAIIDO1</span></div>
-            <div class="map-node node-mid"><span>6th of October</span></div>
-            <div class="map-node node-end"><span>Hadayek Al Ahram</span></div>
+            <!-- ANIMATED MINI VAN ON MAP -->
+            <div class="map-mini-van">
+              <div class="mini-van-body">noon</div>
+            </div>
+            <!-- DYNAMIC STOPS NODES WILL BE INJECTED HERE -->
           </div>
 
           <ul class="timeline-list" id="mTimelineList">
-            <li class="tl-item active">
-              <div class="tl-icon">✓</div>
-              <div class="tl-content">
-                <strong>CAIIDO1 (Source Warehouse)</strong>
-                <span>Departed: 04 Aug 2026, 02:09 AM</span>
-              </div>
-            </li>
-            <li class="tl-item active">
-              <div class="tl-icon">✓</div>
-              <div class="tl-content">
-                <strong>6th of October (Store 1)</strong>
-                <span>Departed: 04 Aug 2026, 03:32 AM</span>
-              </div>
-            </li>
-            <li class="tl-item active">
-              <div class="tl-icon">✓</div>
-              <div class="tl-content">
-                <strong>Hadayek Al Ahram 2 (Store 2)</strong>
-                <span>Arrived & Departed: 05:12 AM</span>
-              </div>
-            </li>
+            <!-- DYNAMIC TIMELINE STOPS -->
           </ul>
         </div>
 
-        <!-- RIGHT: PALLETS LIST SLIDE -->
+        <!-- RIGHT: PALLETS & TOTES BREAKDOWN -->
         <div class="pallets-slide-card">
-          <div class="card-sec-title" style="display:flex; justify-content:space-between;">
+          <div class="card-sec-title" style="display:flex; justify-content:space-between; align-items:center;">
             <span>📦 Loaded Pallets / Barcodes</span>
-            <span id="mPalletCountTag" style="color:var(--primary-red);">5 Barcodes</span>
+            <span id="mPalletCountTag" class="badge-role" style="background:var(--primary-red); font-size:10px;">0 Barcodes</span>
           </div>
 
           <div class="pallet-items-list" id="mPalletsList">
-            <div class="pallet-item">
-              <div>
-                <div class="pallet-code">FPI7LI9J6ASOI</div>
-                <div class="pallet-type">Core Storage</div>
-              </div>
-              <span class="badge-status">Delivered</span>
-            </div>
-            <div class="pallet-item">
-              <div>
-                <div class="pallet-code">FPI7LLOR5JKWI</div>
-                <div class="pallet-type">Core Storage</div>
-              </div>
-              <span class="badge-status">Delivered</span>
-            </div>
-            <div class="pallet-item">
-              <div>
-                <div class="pallet-code">FPI81A1HE7WFG</div>
-                <div class="pallet-type">Core Storage</div>
-              </div>
-              <span class="badge-status">Delivered</span>
-            </div>
+            <!-- DYNAMIC PALLET ITEMS -->
           </div>
         </div>
       </div>
@@ -498,7 +461,6 @@ TGI83K1H6MMBEG</textarea>
           <span id="lastUpdatedTag" style="font-size:12px; font-weight:700; color:var(--text-muted); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);">Syncing with Google Sheets...</span>
         </div>
 
-        <!-- EXECUTIVE KPI CARDS -->
         <div class="stats-row">
           <div class="stat-card">
             <div class="val" id="deStatTrips">0</div>
@@ -532,7 +494,6 @@ TGI83K1H6MMBEG</textarea>
           </div>
         </div>
 
-        <!-- ACTION & MULTI-FILTER BAR -->
         <div class="action-bar">
           <div class="filter-group">
             <label>📅 Date:</label>
@@ -572,7 +533,6 @@ TGI83K1H6MMBEG</textarea>
           <input type="text" id="deSearchInput" placeholder="🔍 Search Store, Driver, Barcode..." onkeyup="applyDataEntryFilters()" style="margin-left: auto; width: 220px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
         </div>
 
-        <!-- EXECUTIVE ANALYTICS DASHBOARD GRID -->
         <div class="analytics-grid" id="deAnalyticsGrid">
           <div class="analytics-card">
             <h3>
@@ -591,17 +551,16 @@ TGI83K1H6MMBEG</textarea>
             </table>
           </div>
 
-          <!-- DRIVER FLEET SUMMARY WITH FULL METRICS -->
           <div class="analytics-card">
             <h3>
-              <span>🚚 Driver Fleet Metrics</span>
+              <span>🚚 Driver Fleet Metrics (إجمالي الحمولات والفروع اليوم)</span>
               <small style="color: var(--text-muted);" id="deDriverCountLbl">0 Drivers</small>
             </h3>
             <table class="mini-table">
               <thead>
                 <tr>
                   <th>Driver / Vehicle</th>
-                  <th>Stores </th>
+                  <th>Stores (فروع)</th>
                   <th>Pallets / Totes</th>
                   <th>Qty Dispatched</th>
                   <th>Inspect</th>
@@ -629,7 +588,6 @@ TGI83K1H6MMBEG</textarea>
           </div>
         </div>
 
-        <!-- MAIN DATA TABLE -->
         <div class="table-card">
           <div class="table-container">
             <table class="main-table">
