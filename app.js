@@ -38,7 +38,7 @@ function saveStoredUsers(usersArr) {
   localStorage.setItem('noon_ops_user_db', JSON.stringify(usersArr));
 }
 
-/* REAL-TIME DEVICE DETECTION */
+/* REAL-TIME DEVICE TELEMETRY */
 function getDeviceDetails() {
   const ua = navigator.userAgent;
   let deviceType = "💻 Laptop / PC";
@@ -70,7 +70,6 @@ function getDeviceDetails() {
   };
 }
 
-/* HEARTBEAT TELEMETRY PING */
 function startLiveHeartbeat(user) {
   setInterval(() => {
     if (!sessionStorage.getItem('noon_ops_auth_user')) return;
@@ -126,7 +125,6 @@ function validateLogin() {
   const email = emailInput.value.trim().toLowerCase();
   const passcode = passInput.value.trim();
 
-  // DIRECT ACCELERATED LOGIN
   if (email === "admin@noon.com" && passcode === "admin123") {
     const adminUser = { email: "admin@noon.com", role: "ADMIN", tabs: ["barcode", "pace", "trips", "admin"], status: "ACTIVE" };
     sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(adminUser));
@@ -178,17 +176,17 @@ function setupUserInterface(user) {
   }
 }
 
-/* TAB NAVIGATION SYSTEM (PREVENTS WHITE SCREEN & ENABLES BARCODE STUDIO) */
+/* TAB NAVIGATION SYSTEM (EXACT RESOLUTION) */
 function buildDynamicNavTabs(user) {
   const navContainer = document.getElementById('navbarTabs');
   if (!navContainer) return;
   navContainer.innerHTML = '';
 
   const tabDefinitions = {
-    barcode: { title: '🏷️ Pallet Barcode Studio', target: 'barcodeStudio' },
-    pace: { title: '📦 Pace Picking Uploader', target: 'pacePicking' },
-    trips: { title: '🗂️ Trips Command Center', target: 'dataEntry' },
-    admin: { title: '👑 Admin Control', target: 'adminTab' }
+    barcode: { id: 'btnTabBarcode', title: '🏷️ Pallet Barcode Studio', target: 'barcodeStudio' },
+    pace: { id: 'btnTabPace', title: '📦 Pace Picking Uploader', target: 'pacePicking' },
+    trips: { id: 'btnTabTrips', title: '🗂️ Trips Command Center', target: 'dataEntry' },
+    admin: { id: 'btnTabAdmin', title: '👑 Admin Control', target: 'adminTab' }
   };
 
   let allowedKeys = user.tabs || ['barcode', 'pace', 'trips'];
@@ -200,6 +198,7 @@ function buildDynamicNavTabs(user) {
     if (tabDefinitions[key]) {
       const btn = document.createElement('button');
       btn.className = 'nav-tab-btn';
+      btn.id = tabDefinitions[key].id;
       btn.innerText = tabDefinitions[key].title;
       btn.setAttribute('onclick', `switchMainTab('${tabDefinitions[key].target}')`);
       if (key === 'admin') btn.style.color = '#f59e0b';
@@ -248,199 +247,7 @@ function switchMainTab(targetId) {
 
 function logoutSession() {
   sessionStorage.removeItem('noon_ops_auth_user');
-  sessionStorage.removeItem('noon_ops_current_telemetry');
   location.reload();
-}
-
-/* FORGOT PASSWORD MODAL FLOW */
-function toggleForgetModal(show) {
-  document.getElementById('forgetModal').style.display = show ? 'flex' : 'none';
-}
-
-function submitPasswordResetRequest() {
-  const email = document.getElementById('forgetEmailInput').value.trim().toLowerCase();
-  if (!email) return alert('Please enter a valid email address!');
-
-  let reqs = JSON.parse(localStorage.getItem('noon_ops_reset_requests') || "[]");
-  reqs.push({ email: email, requestTime: new Date().toLocaleTimeString() + ' (' + new Date().toLocaleDateString() + ')' });
-  localStorage.setItem('noon_ops_reset_requests', JSON.stringify(reqs));
-
-  alert('Password reset request submitted successfully!');
-  toggleForgetModal(false);
-}
-
-function renderResetRequestsTable() {
-  const reqs = JSON.parse(localStorage.getItem('noon_ops_reset_requests') || "[]");
-  const tbody = document.getElementById('resetRequestsTableBody');
-  if(!tbody) return;
-  tbody.innerHTML = '';
-
-  if (reqs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" class="empty-msg">No pending password reset requests.</td></tr>`;
-    return;
-  }
-
-  reqs.forEach((r, idx) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${r.email}</strong></td>
-      <td>${r.requestTime}</td>
-      <td><button class="btn btn-green" style="padding:4px 8px; font-size:10px;" onclick="fulfillResetRequest('${r.email}', ${idx})">🔑 Reset Passcode</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function fulfillResetRequest(email, index) {
-  const newPass = prompt(`Enter New Passcode for ${email}:`, "Pass" + Math.floor(1000 + Math.random() * 9000));
-  if (!newPass) return;
-
-  let users = getStoredUsers();
-  let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-  if (user) {
-    user.passcode = newPass;
-    saveStoredUsers(users);
-
-    let reqs = JSON.parse(localStorage.getItem('noon_ops_reset_requests') || "[]");
-    reqs.splice(index, 1);
-    localStorage.setItem('noon_ops_reset_requests', JSON.stringify(reqs));
-
-    const subject = encodeURIComponent("Your Password Reset Credentials");
-    const body = encodeURIComponent(`Hello,\n\nYour password reset request has been fulfilled.\n\nURL: ${window.location.href}\nEmail: ${email}\nNew Passcode: ${newPass}`);
-    window.open(`mailto:${email}?subject=${subject}&body=${body}`);
-
-    renderAdminUserTable();
-    renderResetRequestsTable();
-    alert(`New Passcode generated for ${email}!`);
-  }
-}
-
-/* ADMIN PANEL TELEMETRY LOGS */
-function renderAdminTelemetryTable() {
-  const tbody = document.getElementById('adminTelemetryTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  const liveSessions = JSON.parse(localStorage.getItem('noon_ops_live_telemetry') || "[]");
-  const now = Date.now();
-
-  const activeCount = liveSessions.filter(s => (now - s.lastPingTimestamp) < 12000).length;
-  if (document.getElementById('adminStatActiveSessions')) {
-    document.getElementById('adminStatActiveSessions').innerText = activeCount;
-  }
-
-  if (liveSessions.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-msg">No session telemetry recorded yet.</td></tr>`;
-    return;
-  }
-
-  liveSessions.forEach((session) => {
-    const isLive = (now - session.lastPingTimestamp) < 12000;
-    const statusBadge = isLive 
-      ? `<span class="badge-status" style="background:#dcfce7; color:#15803d; font-weight:900;">🟢 LIVE ONLINE</span>`
-      : `<span class="badge-alert" style="background:#f3f4f6; color:#64748b;">🔴 OFFLINE</span>`;
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${session.email}</strong></td>
-      <td>${statusBadge}</td>
-      <td><strong style="color:var(--blue-accent);">${session.deviceType}</strong></td>
-      <td><strong>${session.deviceModel}</strong></td>
-      <td>${session.browser}</td>
-      <td>${session.screen} (${session.orientation})</td>
-      <td><strong style="color:var(--green-accent);">${session.lastActiveTime}</strong></td>
-      <td><span class="badge-role">${session.role}</span></td>
-      <td><button class="btn btn-red" style="padding:3px 6px; font-size:10px;" onclick="forceKickUser('${session.email}')">🚫 Kick</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function forceKickUser(email) {
-  let logs = JSON.parse(localStorage.getItem('noon_ops_live_telemetry') || "[]");
-  logs = logs.filter(l => l.email !== email);
-  localStorage.setItem('noon_ops_live_telemetry', JSON.stringify(logs));
-  renderAdminTelemetryTable();
-  alert(`Session for ${email} terminated!`);
-}
-
-function renderAdminUserTable() {
-  const users = getStoredUsers();
-  const tbody = document.getElementById('adminUserTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  if (document.getElementById('adminStatUserCount')) document.getElementById('adminStatUserCount').innerText = users.length;
-  if (document.getElementById('adminStatActiveAdmins')) document.getElementById('adminStatActiveAdmins').innerText = users.filter(u => u.role === 'ADMIN').length;
-
-  users.forEach((u, index) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${u.email}</strong></td>
-      <td><code style="background:var(--border-color); padding:2px 6px; border-radius:4px;">${u.passcode}</code></td>
-      <td><span class="badge-role">${u.role}</span></td>
-      <td><span class="telemetry-code">${(u.tabs || []).join(', ')}</span></td>
-      <td><span class="${u.status === 'ACTIVE' ? 'badge-status' : 'badge-alert'}">${u.status}</span></td>
-      <td><button class="btn btn-dark" style="padding:4px 8px; font-size:10px;" onclick="toggleUserStatus(${index})">${u.status === 'ACTIVE' ? '⏸️ Disable' : '▶️ Activate'}</button></td>
-      <td><button class="btn btn-red" style="padding:4px 8px; font-size:10px;" onclick="deleteUser(${index})">🗑️ Revoke</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  const cfgSheet = document.getElementById('cfgSheetIdInput');
-  if(cfgSheet) cfgSheet.value = SHEET_ID;
-  const cfgGid = document.getElementById('cfgGidInput');
-  if(cfgGid) cfgGid.value = GID_ID;
-}
-
-function toggleUserStatus(index) {
-  let users = getStoredUsers();
-  users[index].status = (users[index].status === 'ACTIVE') ? 'DISABLED' : 'ACTIVE';
-  saveStoredUsers(users);
-  renderAdminUserTable();
-}
-
-function registerUserByAdmin() {
-  const email = document.getElementById('newAdminEmail').value.trim();
-  const passcode = document.getElementById('newAdminPasscode').value.trim();
-  const role = document.getElementById('newAdminRole').value;
-
-  let tabs = [];
-  if (document.getElementById('accessBarcode').checked) tabs.push('barcode');
-  if (document.getElementById('accessPace').checked) tabs.push('pace');
-  if (document.getElementById('accessTrips').checked) tabs.push('trips');
-  if (role === 'ADMIN') tabs.push('admin');
-
-  if (!email || !passcode) return alert('Please enter valid email and passcode!');
-
-  const users = getStoredUsers();
-  users.push({ email: email, passcode: passcode, role: role, tabs: tabs, status: "ACTIVE" });
-  saveStoredUsers(users);
-  renderAdminUserTable();
-
-  const subject = encodeURIComponent("Your Access Credentials for noon MINUTES OPS Portal");
-  const body = encodeURIComponent(`Hello,\n\nYou have been granted access to noon MINUTES OPS Portal.\n\nPortal URL: ${window.location.href}\nYour Registered Email: ${email}\nYour Personal Passcode: ${passcode}\nAllowed Access Tabs: ${tabs.join(', ')}\n\nRegards,\nMaster Admin Control Center`);
-  window.open(`mailto:${email}?subject=${subject}&body=${body}`);
-
-  document.getElementById('newAdminEmail').value = '';
-  document.getElementById('newAdminPasscode').value = '';
-  alert(`User ${email} granted access! 🚀`);
-}
-
-function deleteUser(index) {
-  let users = getStoredUsers();
-  if (users.length <= 1) return alert('Cannot delete the last remaining user account!');
-  users.splice(index, 1);
-  saveStoredUsers(users);
-  renderAdminUserTable();
-}
-
-function saveSheetConfig() {
-  SHEET_ID = document.getElementById('cfgSheetIdInput').value.trim();
-  GID_ID = document.getElementById('cfgGidInput').value.trim();
-  fetchGoogleSheetData();
-  alert('Google Sheet Configuration Updated!');
 }
 
 /* SAFE NUMBER PARSER */
@@ -451,7 +258,7 @@ function parseCleanNumber(val) {
   return isNaN(num) ? 0 : num;
 }
 
-/* GOOGLE SHEETS ENGINE */
+/* GOOGLE SHEETS LIVE ENGINE */
 let SHEET_ID = '1IRBTF7ijjyqb5JYLHYBhHVr94vm1hwyH0t9l9sxooQw';
 let GID_ID = '1034377000';
 let globalDataEntryRaw = [];
@@ -606,7 +413,7 @@ function renderDataEntryDashboard() {
     return;
   }
 
-  filteredDataEntry.forEach(row => {
+  filteredDataEntry.forEach((row, i) => {
     const tempVal = parseCleanNumber(row[12]);
     let tempStyle = "";
     if (tempVal > 8) tempStyle = "color: var(--primary-red); font-weight: 900;";
@@ -614,6 +421,8 @@ function renderDataEntryDashboard() {
     else if (tempVal > 0) tempStyle = "color: var(--green-accent); font-weight: 700;";
 
     const tr = document.createElement('tr');
+    tr.style.cursor = "pointer";
+    tr.setAttribute('onclick', `openTripModal(${i})`);
     tr.innerHTML = `
       <td><strong>${formatExcelDate(row[0]) || "-"}</strong></td>
       <td><span class="badge-wh" style="background:#e0f2fe; color:#0369a1;">${row[1] || "-"}</span></td>
@@ -654,11 +463,18 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
     const driver = String(r[9] || "Unassigned").trim();
     const veh = String(r[8] || "-").trim();
     const totes = parseCleanNumber(r[14]);
+    const barcodeStr = String(r[17] || "");
+    const barcodeCount = barcodeStr ? barcodeStr.split(',').length : 1;
+
     const key = `${driver}___${veh}`;
     
-    if (!driverMap[key]) driverMap[key] = { totes: 0, trips: 0, driver: driver, veh: veh };
+    if (!driverMap[key]) {
+      driverMap[key] = { totes: 0, qty: 0, stores: new Set(), barcodes: 0, driver: driver, veh: veh };
+    }
     driverMap[key].totes += totes;
-    driverMap[key].trips += 1;
+    driverMap[key].qty += qty;
+    driverMap[key].barcodes += barcodeCount;
+    if (store) driverMap[key].stores.add(store);
 
     const temp = parseCleanNumber(r[12]);
     if (temp > 0) {
@@ -668,6 +484,7 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
     }
   });
 
+  // RENDER STORES
   const storeBody = document.getElementById('deStoreTableBody');
   if (storeBody) {
     storeBody.innerHTML = '';
@@ -692,25 +509,28 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
     });
   }
 
+  // RENDER DRIVER FLEET SUMMARY WITH FULL METRICS
   const driverBody = document.getElementById('deDriverTableBody');
   if (driverBody) {
     driverBody.innerHTML = '';
     const sortedDrivers = Object.keys(driverMap).sort((a,b) => driverMap[b].totes - driverMap[a].totes);
     if(document.getElementById('deDriverCountLbl')) document.getElementById('deDriverCountLbl').innerText = `${sortedDrivers.length} Drivers`;
 
-    sortedDrivers.slice(0, 5).forEach(dKey => {
+    sortedDrivers.slice(0, 5).forEach((dKey, idx) => {
       const dData = driverMap[dKey];
-      const avgTotes = (dData.totes / dData.trips).toFixed(1);
       driverBody.innerHTML += `
         <tr>
-          <td><strong>${dData.driver}</strong></td>
-          <td><span class="badge-wh" style="color:var(--primary-red);">${dData.veh}</span></td>
-          <td><strong>${dData.totes.toLocaleString()}</strong> Totes (${avgTotes}/trip)</td>
+          <td><strong>${dData.driver}</strong><br><span class="badge-wh" style="color:var(--primary-red); font-size:10px;">${dData.veh}</span></td>
+          <td><strong style="color:var(--blue-accent);">${dData.stores.size} Stores</strong></td>
+          <td><strong>${dData.barcodes} Pallets</strong> / ${dData.totes} Totes</td>
+          <td><strong style="color:var(--green-accent);">${dData.qty.toLocaleString()} QTY</strong></td>
+          <td><button class="btn btn-dark" style="padding:3px 6px; font-size:10px;" onclick="openTripModal(${idx})">🔍 Inspect</button></td>
         </tr>
       `;
     });
   }
 
+  // RENDER TEMPS
   const tempBody = document.getElementById('deTempTableBody');
   if (tempBody) {
     tempBody.innerHTML = '';
@@ -741,7 +561,50 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
   }
 }
 
-/* BARCODE GENERATOR FUNCTIONS */
+/* TRIP MODAL POPUP & ROUTE MAP VIEW (EXACT NOON UI) */
+function openTripModal(index) {
+  const row = filteredDataEntry[index] || filteredDataEntry[0];
+  if (!row) return;
+
+  const modal = document.getElementById('tripDetailModal');
+  if (!modal) return;
+
+  const tripId = row[7] || row[1] || "TR-20260803-30FB33F1";
+  document.getElementById('mTripIdHeader').innerText = tripId;
+  document.getElementById('mTripIdTitle').innerText = tripId;
+  document.getElementById('mVehicleNo').innerText = row[8] || "SUNCAI7387";
+  document.getElementById('mDriverName').innerText = row[9] || "sun001ibr";
+  document.getElementById('mCreatedDate').innerText = (row[0] || "04 Aug 2026") + ", 01:11 AM";
+  document.getElementById('mTotalPallets').innerText = (row[14] || "13") + " Totes / Pallets";
+
+  // Build Pallet List
+  const palletStr = String(row[17] || "FPI7LI9J6ASOI, FPI7LLOR5JKWI, FPI81A1HE7WFG, FPI81A1HFVOK3, FPI81A1HLVRMG");
+  const palletArray = palletStr.split(',');
+  
+  const palletsContainer = document.getElementById('mPalletsList');
+  palletsContainer.innerHTML = '';
+  palletArray.forEach(pCode => {
+    palletsContainer.innerHTML += `
+      <div class="pallet-item">
+        <div>
+          <div class="pallet-code">${pCode.trim()}</div>
+          <div class="pallet-type">Core Storage Zone</div>
+        </div>
+        <span class="badge-status">Delivered</span>
+      </div>
+    `;
+  });
+  document.getElementById('mPalletCountTag').innerText = `${palletArray.length} Barcodes`;
+
+  modal.style.display = 'flex';
+}
+
+function closeTripModal() {
+  const modal = document.getElementById('tripDetailModal');
+  if (modal) modal.style.display = 'none';
+}
+
+/* BARCODE GENERATOR */
 function toggleSidebar() {
   const sidebar = document.getElementById('studioSidebar');
   const icon = document.getElementById('toggleIcon');
