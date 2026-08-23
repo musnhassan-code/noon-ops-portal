@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>noon MINUTES OPS | Portal Command Center</title>
+  <title>noon MINUTES OPS | Executive Operations & Command Portal</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -14,17 +14,42 @@
 </head>
 <body>
 
-  <!-- AUTHENTICATION OVERLAY -->
+  <!-- HIGH-END AUTHENTICATION OVERLAY WITH ANIMATED JUMBO TRUCK -->
   <div id="authOverlay">
+    <!-- BACKGROUND MOTION GRID -->
+    <div class="speed-grid-lines"></div>
+
+    <!-- ANIMATED NOON MINUTES JUMBO TRUCK -->
+    <div class="jumbo-truck-container">
+      <div class="jumbo-truck">
+        <!-- TRUCK CABIN -->
+        <div class="truck-cabin">
+          <div class="cabin-window"></div>
+          <div class="cabin-headlight"></div>
+        </div>
+        <!-- TRUCK CARGO CONTAINER -->
+        <div class="truck-container-box">
+          <span class="truck-logo-noon">noon</span>
+          <span class="truck-logo-minutes">MINUTES</span>
+        </div>
+        <!-- WHEELS -->
+        <div class="truck-wheel wheel-1"></div>
+        <div class="truck-wheel wheel-2"></div>
+        <div class="truck-wheel wheel-3"></div>
+      </div>
+      <div class="truck-road-line"></div>
+    </div>
+
+    <!-- LOGIN FORM CARD -->
     <div class="auth-card">
       <div class="auth-brand">
         <span class="noon-txt">noon</span>
         <span class="ops-badge">MINUTES OPS</span>
       </div>
-      <p class="auth-sub">Operations Command & Intelligence Portal</p>
+      <p class="auth-sub">Operations Intelligence & Fleet Dispatch Portal</p>
       
       <div class="input-field-group">
-        <label>Work Email Address</label>
+        <label>Corporate Work Email</label>
         <input type="email" id="authEmailInput" placeholder="name@noon.com" autocomplete="off">
       </div>
 
@@ -33,40 +58,40 @@
         <input type="password" id="authPasscodeInput" placeholder="••••••••" maxlength="30" onkeypress="handleAuthKey(event)">
       </div>
 
-      <button class="btn-login-submit" onclick="validateLogin()">Login to Portal ➔</button>
+      <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
       
       <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Security Passcode?</div>
-      <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled account.</div>
+      <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
     </div>
   </div>
 
-  <!-- FORGOT PASSWORD MODAL -->
+  <!-- FORGOT PASSWORD REQUEST MODAL -->
   <div id="forgetModal" style="display: none;">
     <div class="auth-card">
       <div class="auth-brand">
         <span class="noon-txt">noon</span>
         <span class="ops-badge">RESET</span>
       </div>
-      <p class="auth-sub">Enter your email address to request a new passcode from Master Admin.</p>
-      
+      <p class="auth-sub">Enter your email to dispatch a passcode reset request to Master Admin.</p>
+
       <div class="input-field-group">
-        <label>Registered Email</label>
+        <label>Registered Email Address</label>
         <input type="email" id="forgetEmailInput" placeholder="name@noon.com">
       </div>
 
       <button class="btn-login-submit" onclick="submitPasswordResetRequest()">Send Reset Request</button>
-      <div class="forget-link" onclick="toggleForgetModal(false)">← Back to Login</div>
+      <div class="forget-link" onclick="toggleForgetModal(false)">← Back to Login Portal</div>
     </div>
   </div>
 
-  <!-- TOP NAVBAR -->
+  <!-- TOP NAVIGATION NAVBAR -->
   <header class="top-navbar">
     <div class="brand-logo">
       <span class="noon-text">noon</span>
       <span class="ops-badge">MINUTES OPS</span>
     </div>
 
-    <!-- DYNAMIC NAV TABS -->
+    <!-- DYNAMIC TABS GENERATED PER USER PERMISSIONS -->
     <div class="nav-tabs" id="navbarTabs"></div>
 
     <div style="display:flex; align-items:center; gap:12px;">
@@ -627,13 +652,13 @@ TGI83K1H6MMBEG</textarea>
               <thead>
                 <tr>
                   <th>Logged User Email</th>
-                  <th>Access Role</th>
-                  <th>IP & Connection</th>
-                  <th>Operating System</th>
+                  <th>Session Status</th>
+                  <th>Device Type</th>
+                  <th>Hardware / Model</th>
                   <th>Browser Engine</th>
-                  <th>Screen Resolution</th>
-                  <th>Login Timestamp</th>
+                  <th>Screen & Orientation</th>
                   <th>Last Active</th>
+                  <th>Access Role</th>
                   <th>Force Action</th>
                 </tr>
               </thead>
