@@ -12,7 +12,7 @@
   --blue-accent: #3b82f6;
   --green-accent: #22c55e;
   --purple-accent: #a855f7;
-  --warning-yellow: #fe2c2c;
+  --warning-yellow: #f59e0b;
   --table-header-bg: #0f172a;
   --input-bg: #0f172a;
 }
@@ -68,7 +68,6 @@ body {
   overflow: hidden;
 }
 
-/* SPEED GRID LINES IN BACKGROUND */
 .speed-grid-lines {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -82,121 +81,178 @@ body {
 .jumbo-truck-container {
   position: relative;
   width: 100%;
-  max-width: 800px;
-  height: 90px;
+  max-width: 900px;
+  height: 140px;
   margin-bottom: 20px;
   overflow: hidden;
 }
 
 .truck-road-line {
   position: absolute;
-  bottom: 10px;
+  bottom: 12px;
   left: 0; width: 100%;
-  height: 3px;
-  background: repeating-linear-gradient(90deg, #e52e2e 0px, #e52e2e 30px, transparent 30px, transparent 50px);
-  animation: roadMove 0.8s linear infinite;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, #e52e2e 0px, #e52e2e 40px, transparent 40px, transparent 65px);
+  animation: roadMove 0.5s linear infinite;
 }
 
 @keyframes roadMove {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-50px); }
+  100% { transform: translateX(-65px); }
 }
 
 .jumbo-truck {
   position: absolute;
-  bottom: 13px;
-  left: -200px;
+  bottom: 16px;
+  left: -320px;
   display: flex;
   align-items: flex-end;
-  animation: driveJumboTruck 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: driveJumboTruck 6.5s cubic-bezier(0.25, 1, 0.5, 1) infinite;
 }
 
 @keyframes driveJumboTruck {
-  0% { left: -220px; }
-  100% { left: 100%; }
+  0% { left: -320px; }
+  100% { left: 105%; }
 }
 
-/* TRUCK CARGO CONTAINER BOX */
 .truck-container-box {
-  width: 140px;
-  height: 55px;
-  background: #feee00; /* noon Signature Yellow */
+  width: 220px;
+  height: 85px;
+  background: #facc15;
   border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: inset 0 -4px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.3);
   position: relative;
-  border: 1px solid #d9a400;
+  overflow: hidden;
+  border: 2px solid #ca8a04;
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,0.2), 0 10px 20px rgba(0,0,0,0.4);
 }
 
-.truck-logo-noon {
+.container-graphics { width: 100%; height: 100%; position: relative; }
+
+.stripe-red {
+  position: absolute;
+  top: -10px; right: -20px;
+  width: 160px; height: 110px;
+  background: #dc2626;
+  transform: rotate(-22deg);
+  z-index: 1;
+}
+
+.stripe-dark {
+  position: absolute;
+  bottom: -20px; left: -10px;
+  width: 180px; height: 35px;
+  background: #111827;
+  transform: rotate(-12deg);
+  z-index: 1;
+}
+
+.text-everything {
+  position: absolute;
+  top: 10px; left: 10px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #111827;
+  line-height: 0.95;
+  font-style: italic;
+  transform: rotate(-6deg);
+  z-index: 2;
+  text-shadow: 1px 1px 0px #facc15;
+}
+
+.logo-wrap-mini {
+  position: absolute;
+  bottom: 18px; right: 15px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transform: rotate(-8deg);
+}
+
+.logo-noon {
   font-size: 22px;
   font-weight: 900;
-  color: #000000;
-  letter-spacing: -1px;
-  line-height: 0.9;
-}
-
-.truck-logo-minutes {
-  font-size: 8px;
-  font-weight: 900;
-  background: #000000;
   color: #ffffff;
-  padding: 1px 4px;
-  border-radius: 2px;
-  font-style: italic;
+  letter-spacing: -1.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
-/* TRUCK CABIN */
+.logo-minutes {
+  font-size: 9px;
+  font-weight: 900;
+  background: #dc2626;
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.side-door {
+  position: absolute;
+  top: 25px; left: 95px;
+  width: 28px; height: 42px;
+  border: 2px solid #374151;
+  border-radius: 2px;
+  z-index: 4;
+}
+
 .truck-cabin {
-  width: 45px;
-  height: 40px;
-  background: #e52e2e;
-  border-top-right-radius: 12px;
-  border-bottom-right-radius: 4px;
+  width: 55px;
+  height: 58px;
+  background: #ffffff;
+  border-top-right-radius: 16px;
+  border-bottom-right-radius: 6px;
   position: relative;
-  margin-left: 2px;
+  margin-left: 3px;
+  border: 2px solid #cbd5e1;
+  box-shadow: inset -4px 0 0 rgba(0,0,0,0.1);
 }
 
 .cabin-window {
-  width: 18px;
-  height: 16px;
+  width: 24px;
+  height: 22px;
   background: #0f172a;
   position: absolute;
-  top: 5px; right: 5px;
-  border-top-right-radius: 6px;
-  border: 1px solid #475569;
+  top: 8px; right: 6px;
+  border-top-right-radius: 10px;
+  border: 1.5px solid #64748b;
 }
 
 .cabin-headlight {
-  width: 5px; height: 8px;
-  background: #00f2ff;
-  box-shadow: 0 0 10px #00f2ff, 0 0 20px #00f2ff;
+  width: 6px; height: 12px;
+  background: #38bdf8;
+  box-shadow: 0 0 12px #38bdf8, 0 0 24px #0284c7;
   position: absolute;
-  bottom: 8px; right: 0;
+  bottom: 10px; right: 0;
   border-radius: 2px;
 }
 
-/* WHEELS */
+.underglow-leds {
+  position: absolute;
+  bottom: 2px; left: 20px;
+  width: 220px; height: 4px;
+  background: #ef4444;
+  box-shadow: 0 0 12px #ef4444, 0 0 20px #dc2626;
+  border-radius: 2px;
+}
+
 .truck-wheel {
-  width: 16px; height: 16px;
-  background: #111;
-  border: 3px solid #64748b;
+  width: 24px; height: 24px;
+  background: #1e293b;
+  border: 4px solid #94a3b8;
   border-radius: 50%;
   position: absolute;
-  bottom: -8px;
-  animation: spinWheel 0.3s linear infinite;
+  bottom: -12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+  animation: spinWheel 0.25s linear infinite;
 }
 
-.wheel-1 { left: 15px; }
-.wheel-2 { left: 95px; }
-.wheel-3 { right: 8px; }
+.wheel-back-1 { left: 25px; }
+.wheel-back-2 { left: 58px; }
+.wheel-front { right: 10px; }
 
-@keyframes spinWheel {
-  100% { transform: rotate(360deg); }
-}
+@keyframes spinWheel { 100% { transform: rotate(360deg); } }
 
 /* AUTH CARD DESIGN */
 .auth-card {
@@ -235,7 +291,7 @@ body {
 
 .auth-error { font-size: 12px; color: #f87171; font-weight: 700; margin-top: 14px; display: none; text-align: center; background: rgba(229, 46, 46, 0.1); padding: 8px; border-radius: 6px; }
 
-/* NAVBAR & RESPONSIVE LAYOUT */
+/* TOP NAVBAR */
 .top-navbar {
   background-color: var(--topbar-bg);
   height: 56px;
@@ -266,9 +322,21 @@ body {
 .tab-view { display: none; width: 100%; height: 100%; }
 .tab-view.active { display: flex; }
 
-/* STUDIO & TABLES */
+/* FIX SIDEBAR SCROLL & BUTTONS VISIBILITY IN BARCODE STUDIO */
 .studio-container { display: flex; width: 100%; height: calc(100vh - 56px); overflow: hidden; position: relative; }
-.sidebar { width: 320px; background-color: var(--sidebar-bg); color: #ffffff; display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; padding: 20px 16px; gap: 16px; transition: margin-left 0.3s ease; }
+.sidebar { 
+  width: 320px; 
+  background-color: var(--sidebar-bg); 
+  color: #ffffff; 
+  display: flex; 
+  flex-direction: column; 
+  flex-shrink: 0; 
+  overflow-y: auto; 
+  max-height: calc(100vh - 56px); 
+  padding: 20px 16px 40px 16px; 
+  gap: 16px; 
+  transition: margin-left 0.3s ease; 
+}
 .sidebar.collapsed { margin-left: -320px; }
 .sidebar-toggle-btn { background: #1e293b; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.1); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700; }
 
@@ -287,7 +355,7 @@ body {
 .zoom-box input[type="range"] { flex: 1; accent-color: var(--primary-red); cursor: pointer; }
 .zoom-val { font-size: 12px; font-weight: 700; color: #ffffff; width: 40px; }
 
-.btn-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.btn-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding-bottom: 20px; }
 button.btn-action { padding: 11px; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .btn-generate { background-color: var(--primary-red); color: #ffffff; }
 .btn-auto { background-color: #2563eb; color: #ffffff; }
