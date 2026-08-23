@@ -247,6 +247,7 @@ function switchMainTab(targetId) {
 
 function logoutSession() {
   sessionStorage.removeItem('noon_ops_auth_user');
+  sessionStorage.removeItem('noon_ops_current_telemetry');
   location.reload();
 }
 
@@ -462,14 +463,15 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
 
     const driver = String(r[9] || "Unassigned").trim();
     const veh = String(r[8] || "-").trim();
+    const tripId = String(r[7] || r[1] || "").trim();
     const totes = parseCleanNumber(r[14]);
     const barcodeStr = String(r[17] || "");
-    const barcodeCount = barcodeStr ? barcodeStr.split(',').length : 1;
+    const barcodeCount = barcodeStr ? barcodeStr.split(/[,|]/).length : 1;
 
     const key = `${driver}___${veh}`;
     
     if (!driverMap[key]) {
-      driverMap[key] = { totes: 0, qty: 0, stores: new Set(), barcodes: 0, driver: driver, veh: veh };
+      driverMap[key] = { totes: 0, qty: 0, stores: new Set(), barcodes: 0, driver: driver, veh: veh, tripId: tripId };
     }
     driverMap[key].totes += totes;
     driverMap[key].qty += qty;
@@ -509,22 +511,22 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
     });
   }
 
-  // RENDER DRIVER FLEET SUMMARY WITH FULL METRICS
+  // RENDER DRIVERS REAL-TIME FLEET SUMMARY
   const driverBody = document.getElementById('deDriverTableBody');
   if (driverBody) {
     driverBody.innerHTML = '';
     const sortedDrivers = Object.keys(driverMap).sort((a,b) => driverMap[b].totes - driverMap[a].totes);
     if(document.getElementById('deDriverCountLbl')) document.getElementById('deDriverCountLbl').innerText = `${sortedDrivers.length} Drivers`;
 
-    sortedDrivers.slice(0, 5).forEach((dKey, idx) => {
+    sortedDrivers.slice(0, 5).forEach((dKey) => {
       const dData = driverMap[dKey];
       driverBody.innerHTML += `
-        <tr>
+        <tr style="cursor:pointer;" onclick="openTripModal('${dData.tripId}')">
           <td><strong>${dData.driver}</strong><br><span class="badge-wh" style="color:var(--primary-red); font-size:10px;">${dData.veh}</span></td>
           <td><strong style="color:var(--blue-accent);">${dData.stores.size} Stores</strong></td>
           <td><strong>${dData.barcodes} Pallets</strong> / ${dData.totes} Totes</td>
           <td><strong style="color:var(--green-accent);">${dData.qty.toLocaleString()} QTY</strong></td>
-          <td><button class="btn btn-dark" style="padding:3px 6px; font-size:10px;" onclick="openTripModal(${idx})">🔍 Inspect</button></td>
+          <td><button class="btn btn-dark" style="padding:3px 6px; font-size:10px;" onclick="event.stopPropagation(); openTripModal('${dData.tripId}')">🔍 Inspect</button></td>
         </tr>
       `;
     });
@@ -561,40 +563,130 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
   }
 }
 
-/* TRIP MODAL POPUP & ROUTE MAP VIEW (EXACT NOON UI) */
-function openTripModal(index) {
-  const row = filteredDataEntry[index] || filteredDataEntry[0];
-  if (!row) return;
+/* FULL DYNAMIC TRIP DETAILS MODAL & MAP ROUTE */
+function openTripModal(indexOrTripId) {
+  let tripRows = [];
+  let targetTripId = "";
 
+  if (typeof indexOrTripId === 'number') {
+    const selectedRow = filteredDataEntry[indexOrTripId] || filteredDataEntry[0];
+    if (!selectedRow) return;
+    targetTripId = String(selectedRow[7] || selectedRow[1] || "").trim();
+  } else {
+    targetTripId = String(indexOrTripId).trim();
+  }
+
+  tripRows = globalDataEntryRaw.filter(r => 
+    String(r[7] || "").trim() === targetTripId || String(r[1] || "").trim() === targetTripId
+  );
+
+  if (tripRows.length === 0 && filteredDataEntry[indexOrTripId]) {
+    tripRows = [filteredDataEntry[indexOrTripId]];
+  }
+
+  const baseRow = tripRows[0] || [];
   const modal = document.getElementById('tripDetailModal');
   if (!modal) return;
 
-  const tripId = row[7] || row[1] || "TR-20260803-30FB33F1";
+  const tripId = targetTripId || "TR-UNKNOWN";
+  const vehicleNo = baseRow[8] || "-";
+  const driverName = baseRow[9] || "-";
+  const tripDate = formatExcelDate(baseRow[0]) || "-";
+  const sourceWh = baseRow[2] || baseRow[1] || "CAIIDO1";
+
   document.getElementById('mTripIdHeader').innerText = tripId;
   document.getElementById('mTripIdTitle').innerText = tripId;
-  document.getElementById('mVehicleNo').innerText = row[8] || "SUNCAI7387";
-  document.getElementById('mDriverName').innerText = row[9] || "sun001ibr";
-  document.getElementById('mCreatedDate').innerText = (row[0] || "04 Aug 2026") + ", 01:11 AM";
-  document.getElementById('mTotalPallets').innerText = (row[14] || "13") + " Totes / Pallets";
+  document.getElementById('mVehicleNo').innerText = vehicleNo;
+  document.getElementById('mDriverName').innerText = driverName;
+  document.getElementById('mCreatedDate').innerText = `${tripDate}`;
 
-  // Build Pallet List
-  const palletStr = String(row[17] || "FPI7LI9J6ASOI, FPI7LLOR5JKWI, FPI81A1HE7WFG, FPI81A1HFVOK3, FPI81A1HLVRMG");
-  const palletArray = palletStr.split(',');
-  
-  const palletsContainer = document.getElementById('mPalletsList');
-  palletsContainer.innerHTML = '';
-  palletArray.forEach(pCode => {
-    palletsContainer.innerHTML += `
-      <div class="pallet-item">
-        <div>
-          <div class="pallet-code">${pCode.trim()}</div>
-          <div class="pallet-type">Core Storage Zone</div>
-        </div>
-        <span class="badge-status">Delivered</span>
-      </div>
+  const uniqueStores = [...new Set(tripRows.map(r => String(r[3] || "").trim()).filter(Boolean))];
+  const totalTotes = tripRows.reduce((acc, curr) => acc + parseCleanNumber(curr[14]), 0);
+  const totalQty = tripRows.reduce((acc, curr) => acc + parseCleanNumber(curr[16]), 0);
+
+  document.getElementById('mTotalPallets').innerText = `${totalTotes.toLocaleString()} Totes (${totalQty.toLocaleString()} Qty)`;
+
+  // DYNAMIC ROUTE MAP WITH ANIMATED MINI VAN
+  const mapBox = document.getElementById('mapVisualBox');
+  if (mapBox) {
+    mapBox.innerHTML = `
+      <div class="map-path-line"></div>
+      <div class="map-mini-van"><div class="mini-van-body">noon</div></div>
     `;
-  });
-  document.getElementById('mPalletCountTag').innerText = `${palletArray.length} Barcodes`;
+    
+    mapBox.innerHTML += `<div class="map-node node-start"><span>${sourceWh}</span></div>`;
+    
+    uniqueStores.forEach((st) => {
+      mapBox.innerHTML += `<div class="map-node node-mid"><span>${st}</span></div>`;
+    });
+  }
+
+  // DYNAMIC TIMELINE
+  const tlContainer = document.getElementById('mTimelineList');
+  if (tlContainer) {
+    tlContainer.innerHTML = '';
+    
+    tlContainer.innerHTML += `
+      <li class="tl-item active">
+        <div class="tl-icon">✓</div>
+        <div class="tl-content">
+          <strong>${sourceWh} (Source Warehouse)</strong>
+          <span>Departed Dispatch Dock</span>
+        </div>
+      </li>
+    `;
+
+    uniqueStores.forEach((st, i) => {
+      const storeRows = tripRows.filter(r => String(r[3] || "").trim() === st);
+      const storeTotes = storeRows.reduce((a, c) => a + parseCleanNumber(c[14]), 0);
+      const storeQty = storeRows.reduce((a, c) => a + parseCleanNumber(c[16]), 0);
+
+      tlContainer.innerHTML += `
+        <li class="tl-item active">
+          <div class="tl-icon">✓</div>
+          <div class="tl-content">
+            <strong>${st} (Stop ${i + 1})</strong>
+            <span>Delivered: ${storeTotes} Totes / ${storeQty} Qty</span>
+          </div>
+        </li>
+      `;
+    });
+  }
+
+  // DYNAMIC BARCODES & PALLETS
+  const palletsContainer = document.getElementById('mPalletsList');
+  if (palletsContainer) {
+    palletsContainer.innerHTML = '';
+    let totalBarcodesCount = 0;
+
+    tripRows.forEach(r => {
+      const storeName = r[3] || "Store";
+      const rawBarcodes = String(r[17] || "").trim();
+      
+      if (rawBarcodes) {
+        const bList = rawBarcodes.split(/[,|]/).map(b => b.trim()).filter(Boolean);
+        totalBarcodesCount += bList.length;
+
+        bList.forEach(code => {
+          palletsContainer.innerHTML += `
+            <div class="pallet-item">
+              <div>
+                <div class="pallet-code">${code}</div>
+                <div class="pallet-type">Destination: ${storeName}</div>
+              </div>
+              <span class="badge-status">Delivered</span>
+            </div>
+          `;
+        });
+      }
+    });
+
+    if (totalBarcodesCount === 0) {
+      palletsContainer.innerHTML = `<div class="empty-msg">No specific pallet barcodes recorded for this trip.</div>`;
+    }
+
+    document.getElementById('mPalletCountTag').innerText = `${totalBarcodesCount} Barcodes`;
+  }
 
   modal.style.display = 'flex';
 }
