@@ -1,6 +1,17 @@
 /* GOOGLE APPS SCRIPT WEB APP API URL */
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQIrKh10aXyRTfuHnw6PvO7l7oCWhgK3Ek5nrf-gXKwV0AFtTRhhgft7kNo2VvnuIX/exec";
 
+/* DEFAULT SYSTEM PARAMETERS */
+let SHEET_ID = '1Mr_5nNopFFvu1mEPeqA33QJz2dS65aApJfGQEu91C9w';
+let GID_TRIPS = '0';
+let GID_ATTENDANCE = '2092258043';
+
+let globalAttendanceRaw = [];
+let filteredAttendance = [];
+let globalDataEntryRaw = [];
+let filteredDataEntry = [];
+let remoteUsersList = [];
+
 /* THEME MANAGEMENT */
 function initTheme() {
   const savedTheme = localStorage.getItem('noon_ops_theme') || 'dark';
@@ -21,9 +32,7 @@ function updateThemeButtonText(theme) {
   if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
 }
 
-/* USER DATABASE MANAGEMENT (LIVE GOOGLE SHEETS SYNC) */
-let remoteUsersList = [];
-
+/* FETCH USERS FROM GOOGLE SHEET */
 async function fetchUsersFromSheet() {
   try {
     let res = await fetch(APPS_SCRIPT_URL);
@@ -32,12 +41,12 @@ async function fetchUsersFromSheet() {
       return remoteUsersList;
     }
   } catch (err) {
-    console.error("Error fetching user directory from Google Sheets:", err);
+    console.error("Error fetching user directory:", err);
   }
   return [];
 }
 
-/* AUTH UI TOGGLES & REGISTRATION */
+/* AUTHENTICATION UI & ACTIONS */
 function toggleAuthMode(mode) {
   const loginCard = document.getElementById('loginCard');
   const registerCard = document.getElementById('registerCard');
@@ -100,7 +109,6 @@ async function submitRegistration() {
   }
 }
 
-/* AUTHENTICATION CONTROL */
 function checkAuthSession() {
   const activeSession = sessionStorage.getItem('noon_ops_auth_user');
   if (activeSession) {
@@ -185,7 +193,7 @@ function setupUserInterface(user) {
   }
 }
 
-/* TAB NAVIGATION SYSTEM */
+/* NAVIGATION TABS */
 function buildDynamicNavTabs(user) {
   const navContainer = document.getElementById('navbarTabs');
   if (!navContainer) return;
@@ -248,7 +256,6 @@ function logoutSession() {
   location.reload();
 }
 
-/* SAFE NUMBER PARSER */
 function parseCleanNumber(val) {
   if (val === null || val === undefined) return 0;
   let cleanStr = String(val).replace(/,/g, '').replace(/[^0-9.-]/g, '').trim();
@@ -256,17 +263,7 @@ function parseCleanNumber(val) {
   return isNaN(num) ? 0 : num;
 }
 
-/* GOOGLE SHEETS ENGINES */
-let SHEET_ID = '1Mr_5nNopFFvu1mEPeqA33QJz2dS65aApJfGQEu91C9w';
-let GID_TRIPS = '0';
-let GID_ATTENDANCE = '2092258043';
-
-let globalAttendanceRaw = [];
-let filteredAttendance = [];
-let globalDataEntryRaw = [];
-let filteredDataEntry = [];
-
-/* ENHANCED FLEET ATTENDANCE LIVE GOOGLE SHEET PARSER */
+/* ATTENDANCE DATA ENGINE */
 async function fetchAttendanceSheetData() {
   const updatedTag = document.getElementById('attLastUpdatedTag');
   if (updatedTag) updatedTag.innerText = "⏳ Syncing Attendance Sheet...";
@@ -274,9 +271,14 @@ async function fetchAttendanceSheetData() {
   const attendanceCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_ATTENDANCE}&t=${Date.now()}`;
 
   try {
-    let response = await fetch(attendanceCsvUrl);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    let response = await fetch(attendanceCsvUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (!response.ok) throw new Error("Attendance Fetch Failure");
-    
+
     let csvText = await response.text();
     let workbook = XLSX.read(csvText, { type: 'string' });
     let sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -285,10 +287,12 @@ async function fetchAttendanceSheetData() {
     if (matrix && matrix.length > 2) {
       parseAttendanceMatrix(matrix);
       if (updatedTag) updatedTag.innerText = `✅ Live Synced (${globalAttendanceRaw.length} Records) at ${new Date().toLocaleTimeString()}`;
+    } else {
+      if (updatedTag) updatedTag.innerText = `⚠️ Attendance Tab Empty or Invalid.`;
     }
   } catch (err) {
     console.error("Attendance Fetch Error:", err);
-    if (updatedTag) updatedTag.innerText = `⚠️ Attendance Connection Error.`;
+    if (updatedTag) updatedTag.innerText = `⚠️ Connection Error (Check Sheet Permissions)`;
   }
 }
 
@@ -439,7 +443,12 @@ async function fetchGoogleSheetData() {
   const googleLiveCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_TRIPS}&t=${Date.now()}`;
 
   try {
-    let response = await fetch(googleLiveCsvUrl);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    let response = await fetch(googleLiveCsvUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (!response.ok) throw new Error("Connection Failure");
     
     let csvText = await response.text();
@@ -456,7 +465,7 @@ async function fetchGoogleSheetData() {
     }
   } catch (err) {
     console.error("Fetch error:", err);
-    if (updatedTag) updatedTag.innerText = `⚠️ Google Connection Error.`;
+    if (updatedTag) updatedTag.innerText = `⚠️ Connection Error (Check Sheet Access)`;
   }
 
   populateFilterDropdowns();
@@ -579,7 +588,7 @@ function renderDataEntryDashboard() {
   });
 }
 
-/* ADMIN CONTROL ENGINE WITH LIVE SHEET ACTIONS */
+/* ADMIN CONTROL ENGINE */
 async function renderPendingUsersTable() {
   const tbody = document.getElementById('pendingUsersTableBody');
   if (!tbody) return;
@@ -679,9 +688,24 @@ function saveSheetConfig() {
   fetchGoogleSheetData();
 }
 
+function loadSheetConfig() {
+  const savedSheetId = localStorage.getItem('noon_ops_sheet_id');
+  const savedGid = localStorage.getItem('noon_ops_gid_id');
+
+  if (savedSheetId && savedSheetId.trim() !== "") SHEET_ID = savedSheetId;
+  if (savedGid && savedGid.trim() !== "") GID_TRIPS = savedGid;
+
+  const sheetInput = document.getElementById('cfgSheetIdInput');
+  const gidInput = document.getElementById('cfgGidInput');
+
+  if (sheetInput) sheetInput.value = SHEET_ID;
+  if (gidInput) gidInput.value = GID_TRIPS;
+}
+
 /* INITIALIZATION ON LOAD */
 window.onload = function() {
   initTheme();
+  loadSheetConfig();
   checkAuthSession();
   fetchAttendanceSheetData();
 };
