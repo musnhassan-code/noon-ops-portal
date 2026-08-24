@@ -18,11 +18,11 @@ function updateThemeButtonText(theme) {
   if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
 }
 
-/* USER DATABASE & REGISTRATION QUEUE */
+/* USER DATABASE */
 let defaultUsers = [
-  { name: "Master Admin", email: "admin@noon.com", passcode: "admin123", role: "ADMIN", tabs: ["barcode", "pace", "trips", "admin"], status: "ACTIVE" },
-  { name: "Mustafa Hassan", email: "musnhassan@noon.com", passcode: "1234", role: "USER", tabs: ["barcode", "pace", "trips"], status: "ACTIVE" },
-  { name: "Standard User", email: "user@noon.com", passcode: "1234", role: "USER", tabs: ["barcode", "trips"], status: "ACTIVE" }
+  { email: "admin@noon.com", passcode: "admin123", role: "ADMIN", tabs: ["barcode", "pace", "trips", "admin"], status: "ACTIVE" },
+  { email: "musnhassan@noon.com", passcode: "1234", role: "USER", tabs: ["barcode", "pace", "trips"], status: "ACTIVE" },
+  { email: "user@noon.com", passcode: "1234", role: "USER", tabs: ["barcode", "trips"], status: "ACTIVE" }
 ];
 
 function getStoredUsers() {
@@ -36,62 +36,6 @@ function getStoredUsers() {
 
 function saveStoredUsers(usersArr) {
   localStorage.setItem('noon_ops_user_db', JSON.stringify(usersArr));
-}
-
-/* AUTH UI TOGGLES & REGISTRATION */
-function toggleAuthMode(mode) {
-  const loginCard = document.getElementById('loginCard');
-  const registerCard = document.getElementById('registerCard');
-  if (mode === 'register') {
-    loginCard.style.display = 'none';
-    registerCard.style.display = 'block';
-  } else {
-    loginCard.style.display = 'block';
-    registerCard.style.display = 'none';
-  }
-}
-
-function submitRegistration() {
-  const name = document.getElementById('regNameInput').value.trim();
-  const email = document.getElementById('regEmailInput').value.trim().toLowerCase();
-  const passcode = document.getElementById('regPasscodeInput').value.trim();
-  const msgBox = document.getElementById('regErrorMsg');
-
-  if (!name || !email || !passcode) {
-    msgBox.style.display = 'block';
-    msgBox.style.background = 'rgba(229, 46, 46, 0.1)';
-    msgBox.style.color = '#f87171';
-    msgBox.innerText = '⚠️ All fields are required!';
-    return;
-  }
-
-  let users = getStoredUsers();
-  if (users.find(u => u.email === email)) {
-    msgBox.style.display = 'block';
-    msgBox.style.background = 'rgba(229, 46, 46, 0.1)';
-    msgBox.style.color = '#f87171';
-    msgBox.innerText = '⚠️ Email already registered!';
-    return;
-  }
-
-  users.push({
-    name: name,
-    email: email,
-    passcode: passcode,
-    role: "USER",
-    tabs: ["barcode", "pace", "trips"],
-    status: "PENDING"
-  });
-
-  saveStoredUsers(users);
-  msgBox.style.display = 'block';
-  msgBox.style.background = 'rgba(34, 197, 94, 0.1)';
-  msgBox.style.color = '#4ade80';
-  msgBox.innerText = '✅ Request submitted! Wait for Admin Approval.';
-
-  setTimeout(() => {
-    toggleAuthMode('login');
-  }, 2500);
 }
 
 /* AUTHENTICATION CONTROL */
@@ -120,27 +64,37 @@ function validateLogin() {
   const email = emailInput.value.trim().toLowerCase();
   const passcode = passInput.value.trim();
 
+  if (email === "admin@noon.com" && passcode === "admin123") {
+    const adminUser = { email: "admin@noon.com", role: "ADMIN", tabs: ["barcode", "pace", "trips", "admin"], status: "ACTIVE" };
+    sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(adminUser));
+    unlockPortal(adminUser);
+    return;
+  } 
+  
+  if ((email === "musnhassan@noon.com" || email === "user@noon.com") && passcode === "1234") {
+    const stdUser = { email: email, role: "USER", tabs: ["barcode", "pace", "trips"], status: "ACTIVE" };
+    sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(stdUser));
+    unlockPortal(stdUser);
+    return;
+  }
+
   const userDb = getStoredUsers();
-  const matchedUser = userDb.find(u => u.email.toLowerCase() === email && u.passcode === passcode);
+  const matchedUser = userDb.find(u => u.email.toLowerCase() === email && u.passcode === passcode && u.status === "ACTIVE");
 
   if (matchedUser) {
-    if (matchedUser.status === "PENDING") {
-      errorMsg.innerText = "⏳ Account pending admin approval.";
-      errorMsg.style.display = 'block';
-      return;
-    }
     sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(matchedUser));
     unlockPortal(matchedUser);
   } else {
-    errorMsg.innerText = "⚠️ Invalid credentials or account not found.";
-    errorMsg.style.display = 'block';
+    if (errorMsg) errorMsg.style.display = 'block';
     passInput.value = '';
   }
 }
 
 function unlockPortal(user) {
   const overlay = document.getElementById('authOverlay');
+  const errorMsg = document.getElementById('authErrorMsg');
   if (overlay) overlay.style.display = 'none';
+  if (errorMsg) errorMsg.style.display = 'none';
 
   setupUserInterface(user);
 }
@@ -154,11 +108,11 @@ function setupUserInterface(user) {
   buildDynamicNavTabs(user);
 
   if (user.role === 'ADMIN') {
-    renderPendingUsersTable();
     renderAdminUserTable();
   }
 }
 
+/* TAB NAVIGATION SYSTEM */
 function buildDynamicNavTabs(user) {
   const navContainer = document.getElementById('navbarTabs');
   if (!navContainer) return;
@@ -206,6 +160,7 @@ function switchMainTab(targetId) {
 
   const activeViewId = viewMap[targetId] || targetId;
   const targetView = document.getElementById(activeViewId);
+  
   if (targetView) targetView.classList.add('active');
 
   const buttons = document.querySelectorAll('.nav-tab-btn');
@@ -220,7 +175,6 @@ function switchMainTab(targetId) {
   } else if (targetId === 'dataEntry' && !globalDataEntryRaw.length) {
     fetchGoogleSheetData();
   } else if (targetId === 'adminTab') {
-    renderPendingUsersTable();
     renderAdminUserTable();
   }
 }
@@ -244,6 +198,7 @@ let GID_ID = '1034377000';
 let globalDataEntryRaw = [];
 let filteredDataEntry = [];
 
+/* ADMIN SYSTEM PARAMETER CONFIGURATION */
 function saveSheetConfig() {
   const sheetInput = document.getElementById('cfgSheetIdInput');
   const gidInput = document.getElementById('cfgGidInput');
@@ -774,69 +729,22 @@ function generateBatch() {
   });
 }
 
-/* ADMIN CONTROLS FOR REGISTRATION REQUESTS */
-function renderPendingUsersTable() {
-  const tbody = document.getElementById('pendingUsersTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  const users = getStoredUsers();
-  const pendingUsers = users.filter(u => u.status === 'PENDING');
-
-  if (pendingUsers.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No pending registration requests.</td></tr>`;
-    return;
-  }
-
-  pendingUsers.forEach((u) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${u.name || "N/A"}</strong></td>
-      <td>${u.email}</td>
-      <td><code>${u.passcode}</code></td>
-      <td>
-        <button class="btn" style="background:var(--green-accent); padding:4px 10px; font-size:11px;" onclick="approveUser('${u.email}')">✅ Approve & Grant Access</button>
-        <button class="btn" style="background:var(--primary-red); padding:4px 10px; font-size:11px;" onclick="rejectUser('${u.email}')">❌ Reject</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function approveUser(email) {
-  let users = getStoredUsers();
-  const user = users.find(u => u.email === email);
-  if (user) {
-    user.status = 'ACTIVE';
-    saveStoredUsers(users);
-    alert(`✅ Account ${email} has been approved!`);
-    renderPendingUsersTable();
-    renderAdminUserTable();
-  }
-}
-
-function rejectUser(email) {
-  let users = getStoredUsers();
-  users = users.filter(u => u.email !== email);
-  saveStoredUsers(users);
-  renderPendingUsersTable();
-  renderAdminUserTable();
-}
-
 function renderAdminUserTable() {
   const tbody = document.getElementById('adminUserTableBody');
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const users = getStoredUsers().filter(u => u.status === 'ACTIVE');
+  const users = getStoredUsers();
   users.forEach((u) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${u.email}</strong></td>
       <td><code>${u.passcode}</code></td>
       <td><span class="badge-wh">${u.role}</span></td>
+      <td>${(u.tabs || []).join(', ')}</td>
       <td><span class="badge-status">${u.status}</span></td>
-      <td><button class="btn btn-dark" style="padding:3px 8px; font-size:10px;" onclick="rejectUser('${u.email}')">Revoke</button></td>
+      <td><button class="btn btn-dark" style="padding:3px 8px; font-size:10px;">Toggle</button></td>
+      <td><button class="btn btn-red" style="padding:3px 8px; font-size:10px;">Revoke</button></td>
     `;
     tbody.appendChild(tr);
   });
@@ -854,7 +762,6 @@ function registerUserByAdmin() {
 
   let users = getStoredUsers();
   users.push({
-    name: "Admin Created User",
     email: email,
     passcode: passcode,
     role: role,
