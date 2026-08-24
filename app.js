@@ -20,9 +20,9 @@ function updateThemeButtonText(theme) {
 
 /* USER DATABASE */
 let defaultUsers = [
-  { email: "admin@noon.com", passcode: "admin123", role: "ADMIN", tabs: ["barcode", "pace", "trips", "admin"], status: "ACTIVE" },
-  { email: "musnhassan@noon.com", passcode: "1234", role: "USER", tabs: ["barcode", "pace", "trips"], status: "ACTIVE" },
-  { email: "user@noon.com", passcode: "1234", role: "USER", tabs: ["barcode", "trips"], status: "ACTIVE" }
+  { email: "admin@noon.com", passcode: "admin123", role: "ADMIN", tabs: ["attendance", "trips", "admin"], status: "ACTIVE" },
+  { email: "musnhassan@noon.com", passcode: "1234", role: "USER", tabs: ["attendance", "trips"], status: "ACTIVE" },
+  { email: "user@noon.com", passcode: "1234", role: "USER", tabs: ["attendance", "trips"], status: "ACTIVE" }
 ];
 
 function getStoredUsers() {
@@ -36,6 +36,138 @@ function getStoredUsers() {
 
 function saveStoredUsers(usersArr) {
   localStorage.setItem('noon_ops_user_db', JSON.stringify(usersArr));
+}
+
+/* FLEET ATTENDANCE SYSTEM ENGINE */
+let attendanceDb = [
+  { date: "2026-08-24", vehicle: "CAI_AMB_T010", driver: "Diab", status: "PRESENT", notes: "Loaded 3 Totes - Evening Shift" },
+  { date: "2026-08-24", vehicle: "CAI_AMB_T005", driver: "Ibrahim Ali", status: "PRESENT", notes: "Loaded 2 Totes" },
+  { date: "2026-08-24", vehicle: "CAI_AMB_T003", driver: "Hassan Mahmoud", status: "MAINTENANCE", notes: "Oil Change" }
+];
+
+function getStoredAttendance() {
+  let stored = localStorage.getItem('noon_ops_attendance_db');
+  if (!stored) {
+    localStorage.setItem('noon_ops_attendance_db', JSON.stringify(attendanceDb));
+    return attendanceDb;
+  }
+  return JSON.parse(stored);
+}
+
+function saveStoredAttendance(db) {
+  localStorage.setItem('noon_ops_attendance_db', JSON.stringify(db));
+}
+
+function saveAttendanceEntry() {
+  const dateVal = document.getElementById('attInputDate').value;
+  const vehicleVal = document.getElementById('attInputVehicle').value.trim().toUpperCase();
+  const driverVal = document.getElementById('attInputDriver').value.trim();
+  const statusVal = document.getElementById('attInputStatus').value;
+  const notesVal = document.getElementById('attInputNotes').value.trim();
+
+  if (!dateVal || !vehicleVal) {
+    alert("⚠️ Please select Date and enter Vehicle Number!");
+    return;
+  }
+
+  let db = getStoredAttendance();
+  db.unshift({
+    date: dateVal,
+    vehicle: vehicleVal,
+    driver: driverVal || "Unassigned",
+    status: statusVal,
+    notes: notesVal || "-"
+  });
+
+  saveStoredAttendance(db);
+  alert(`✅ Attendance saved for Vehicle: ${vehicleVal}`);
+  
+  document.getElementById('attInputVehicle').value = '';
+  document.getElementById('attInputDriver').value = '';
+  document.getElementById('attInputNotes').value = '';
+
+  renderAttendanceDashboard();
+}
+
+function renderAttendanceDashboard() {
+  const tbody = document.getElementById('attHistoryTableBody');
+  if (!tbody) return;
+
+  let db = getStoredAttendance();
+  const fromDate = document.getElementById('attFilterFrom') ? document.getElementById('attFilterFrom').value : '';
+  const toDate = document.getElementById('attFilterTo') ? document.getElementById('attFilterTo').value : '';
+  const search = document.getElementById('attFilterSearch') ? document.getElementById('attFilterSearch').value.toLowerCase() : '';
+
+  let filtered = db.filter(item => {
+    let matchFrom = !fromDate || item.date >= fromDate;
+    let matchTo = !toDate || item.date <= toDate;
+    let matchSearch = !search || item.vehicle.toLowerCase().includes(search) || item.driver.toLowerCase().includes(search);
+    return matchFrom && matchTo && matchSearch;
+  });
+
+  // Calculate Today Stats
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayRecords = db.filter(i => i.date === todayStr);
+  const presentCount = todayRecords.filter(i => i.status === 'PRESENT').length;
+  const absentCount = todayRecords.filter(i => i.status === 'ABSENT').length;
+  const standbyCount = todayRecords.filter(i => i.status === 'MAINTENANCE' || i.status === 'STANDBY').length;
+  const totalToday = todayRecords.length;
+  const rate = totalToday > 0 ? ((presentCount / totalToday) * 100).toFixed(0) : '0';
+
+  if (document.getElementById('attStatPresent')) document.getElementById('attStatPresent').innerText = presentCount;
+  if (document.getElementById('attStatAbsent')) document.getElementById('attStatAbsent').innerText = absentCount;
+  if (document.getElementById('attStatStandby')) document.getElementById('attStatStandby').innerText = standbyCount;
+  if (document.getElementById('attStatRate')) document.getElementById('attStatRate').innerText = `${rate}%`;
+  if (document.getElementById('attLogCount')) document.getElementById('attLogCount').innerText = `${filtered.length} Records`;
+
+  tbody.innerHTML = '';
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-msg">No attendance records found matching filters.</td></tr>`;
+    return;
+  }
+
+  filtered.forEach((item, index) => {
+    let badgeClass = "badge-status";
+    if (item.status === 'ABSENT') badgeClass = "badge-alert";
+    else if (item.status === 'MAINTENANCE' || item.status === 'STANDBY') badgeClass = "badge-wh";
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${item.date}</strong></td>
+      <td><strong style="color:var(--primary-red);">${item.vehicle}</strong></td>
+      <td>${item.driver}</td>
+      <td><span class="${badgeClass}">${item.status}</span></td>
+      <td>${item.notes}</td>
+      <td><button class="btn btn-dark" style="padding:3px 8px; font-size:10px;" onclick="deleteAttendanceRecord(${index})">🗑️ Delete</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function deleteAttendanceRecord(index) {
+  let db = getStoredAttendance();
+  db.splice(index, 1);
+  saveStoredAttendance(db);
+  renderAttendanceDashboard();
+}
+
+function filterAttendanceHistory() {
+  renderAttendanceDashboard();
+}
+
+function resetAttendanceFilters() {
+  if (document.getElementById('attFilterFrom')) document.getElementById('attFilterFrom').value = '';
+  if (document.getElementById('attFilterTo')) document.getElementById('attFilterTo').value = '';
+  if (document.getElementById('attFilterSearch')) document.getElementById('attFilterSearch').value = '';
+  renderAttendanceDashboard();
+}
+
+function exportAttendanceExcel() {
+  let db = getStoredAttendance();
+  let ws = XLSX.utils.json_to_sheet(db);
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Fleet_Attendance");
+  XLSX.writeFile(wb, `Fleet_Attendance_Log_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 /* AUTHENTICATION CONTROL */
@@ -65,14 +197,14 @@ function validateLogin() {
   const passcode = passInput.value.trim();
 
   if (email === "admin@noon.com" && passcode === "admin123") {
-    const adminUser = { email: "admin@noon.com", role: "ADMIN", tabs: ["barcode", "pace", "trips", "admin"], status: "ACTIVE" };
+    const adminUser = { email: "admin@noon.com", role: "ADMIN", tabs: ["attendance", "trips", "admin"], status: "ACTIVE" };
     sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(adminUser));
     unlockPortal(adminUser);
     return;
   } 
   
   if ((email === "musnhassan@noon.com" || email === "user@noon.com") && passcode === "1234") {
-    const stdUser = { email: email, role: "USER", tabs: ["barcode", "pace", "trips"], status: "ACTIVE" };
+    const stdUser = { email: email, role: "USER", tabs: ["attendance", "trips"], status: "ACTIVE" };
     sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(stdUser));
     unlockPortal(stdUser);
     return;
@@ -119,13 +251,12 @@ function buildDynamicNavTabs(user) {
   navContainer.innerHTML = '';
 
   const tabDefinitions = {
-    barcode: { id: 'btnTabBarcode', title: '🏷️ Pallet Barcode Studio', target: 'barcodeStudio' },
-    pace: { id: 'btnTabPace', title: '📦 Pace Picking Uploader', target: 'pacePicking' },
-    trips: { id: 'btnTabTrips', title: '🗂️ Trips Command Center', target: 'dataEntry' },
-    admin: { id: 'btnTabAdmin', title: '👑 Admin Control', target: 'adminTab' }
+    attendance: { id: 'btnTabAttendance', title: '🚚 Fleet Attendance', target: 'attendanceView' },
+    trips: { id: 'btnTabTrips', title: '🗂️ Middle Mile Command Center', target: 'dataEntryView' },
+    admin: { id: 'btnTabAdmin', title: '👑 Admin Control', target: 'adminTabView' }
   };
 
-  let allowedKeys = user.tabs || ['barcode', 'pace', 'trips'];
+  let allowedKeys = user.tabs || ['attendance', 'trips'];
   if (user.role === 'ADMIN' && !allowedKeys.includes('admin')) {
     allowedKeys.push('admin');
   }
@@ -151,16 +282,7 @@ function switchMainTab(targetId) {
   document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
 
-  const viewMap = {
-    'barcodeStudio': 'barcodeStudioView',
-    'pacePicking': 'pacePickingView',
-    'dataEntry': 'dataEntryView',
-    'adminTab': 'adminTabView'
-  };
-
-  const activeViewId = viewMap[targetId] || targetId;
-  const targetView = document.getElementById(activeViewId);
-  
+  const targetView = document.getElementById(targetId);
   if (targetView) targetView.classList.add('active');
 
   const buttons = document.querySelectorAll('.nav-tab-btn');
@@ -170,11 +292,11 @@ function switchMainTab(targetId) {
     }
   });
 
-  if (targetId === 'barcodeStudio') {
-    generateBatch();
-  } else if (targetId === 'dataEntry' && !globalDataEntryRaw.length) {
+  if (targetId === 'attendanceView') {
+    renderAttendanceDashboard();
+  } else if (targetId === 'dataEntryView' && !globalDataEntryRaw.length) {
     fetchGoogleSheetData();
-  } else if (targetId === 'adminTab') {
+  } else if (targetId === 'adminTabView') {
     renderAdminUserTable();
   }
 }
@@ -198,7 +320,6 @@ let GID_ID = '1034377000';
 let globalDataEntryRaw = [];
 let filteredDataEntry = [];
 
-/* ADMIN SYSTEM PARAMETER CONFIGURATION */
 function saveSheetConfig() {
   const sheetInput = document.getElementById('cfgSheetIdInput');
   const gidInput = document.getElementById('cfgGidInput');
@@ -653,82 +774,6 @@ function closeTripModal() {
   if (modal) modal.style.display = 'none';
 }
 
-/* BARCODE GENERATOR */
-function toggleSidebar() {
-  const sidebar = document.getElementById('studioSidebar');
-  const icon = document.getElementById('toggleIcon');
-  if(sidebar) sidebar.classList.toggle('collapsed');
-  if(icon) icon.innerText = sidebar.classList.contains('collapsed') ? '▶' : '◀';
-}
-
-function detectAlgorithmType(code) {
-  if (code.startsWith('FPI')) return 'PALLET';
-  if (code.startsWith('TGI') && code.charAt(7) === 'G') return 'GLOBAL TOTE';
-  if (code.startsWith('TGI') && code.charAt(7) === 'H') return 'GLOBAL TOTE MINS';
-  return 'STAGING';
-}
-
-function generateBatch() {
-  const grid = document.getElementById('labelsGrid');
-  if (!grid) return;
-  grid.innerHTML = '';
-
-  const zoneText = document.getElementById('statZoneText') ? document.getElementById('statZoneText').innerText : 'AMB';
-  const warehouseSelect = document.getElementById('warehouseSelect');
-  const warehouseText = warehouseSelect ? warehouseSelect.value : 'CAIIDO1';
-  const symbologySelect = document.getElementById('symbologySelect');
-  const format = symbologySelect ? symbologySelect.value : 'CODE128';
-  const codeListInput = document.getElementById('codeListInput');
-  const rawInput = codeListInput ? codeListInput.value : '';
-  
-  const codes = rawInput.split('\n').map(c => c.trim().toUpperCase()).filter(c => c.length > 0);
-  if(document.getElementById('labelCount')) document.getElementById('labelCount').innerText = codes.length;
-
-  if (codes.length === 0) return;
-
-  codes.forEach((code, i) => {
-    const elemId = `render-target-${i}`;
-    const labelAlgoTag = detectAlgorithmType(code);
-    let renderTag = ['CODE128', 'CODE39', 'EAN13'].includes(format) ? `<svg id="${elemId}"></svg>` : `<canvas id="${elemId}"></canvas>`;
-
-    const cardHTML = `
-      <div class="label-card" data-code="${code}" style="animation-delay: ${i * 0.03}s">
-        <div class="label-header">
-          <div class="brand-mini">
-            <div class="noon-txt">noon</div>
-            <div class="min-tag">MINUTES</div>
-          </div>
-          <div class="header-center"><span class="wh-badge">${warehouseText}</span></div>
-          <div class="label-info">
-            <span class="algo-type-tag">${labelAlgoTag}</span>
-            <div class="zone-lbl">${zoneText}</div>
-          </div>
-        </div>
-        <div class="code-container">${renderTag}</div>
-        <div class="code-footer-wrap">
-          <span class="tech-hash">#${(i+1).toString().padStart(3, '0')}</span>
-          <span class="code-text-footer">${code}</span>
-          <span class="tech-hash">EG</span>
-        </div>
-      </div>
-    `;
-
-    grid.insertAdjacentHTML('beforeend', cardHTML);
-
-    try {
-      if (['CODE128', 'CODE39', 'EAN13'].includes(format)) {
-        JsBarcode(`#${elemId}`, code, { format: format, displayValue: false, margin: 0, height: 45, width: 1.6 });
-      } else if (format === 'QR') {
-        bwipjs.toCanvas(elemId, { bcid: 'qrcode', text: code, scale: 3 });
-      } else if (format === 'DATAMATRIX') {
-        bwipjs.toCanvas(elemId, { bcid: 'datamatrix', text: code, scale: 2 });
-      } else if (format === 'PDF417') {
-        bwipjs.toCanvas(elemId, { bcid: 'pdf417', text: code, scale: 2 });
-      }
-    } catch (e) { console.error(e); }
-  });
-}
-
 function renderAdminUserTable() {
   const tbody = document.getElementById('adminUserTableBody');
   if (!tbody) return;
@@ -741,9 +786,7 @@ function renderAdminUserTable() {
       <td><strong>${u.email}</strong></td>
       <td><code>${u.passcode}</code></td>
       <td><span class="badge-wh">${u.role}</span></td>
-      <td>${(u.tabs || []).join(', ')}</td>
       <td><span class="badge-status">${u.status}</span></td>
-      <td><button class="btn btn-dark" style="padding:3px 8px; font-size:10px;">Toggle</button></td>
       <td><button class="btn btn-red" style="padding:3px 8px; font-size:10px;">Revoke</button></td>
     `;
     tbody.appendChild(tr);
@@ -765,7 +808,7 @@ function registerUserByAdmin() {
     email: email,
     passcode: passcode,
     role: role,
-    tabs: ["barcode", "pace", "trips"],
+    tabs: ["attendance", "trips"],
     status: "ACTIVE"
   });
 
@@ -779,5 +822,9 @@ window.onload = function() {
   initTheme();
   loadSheetConfig();
   checkAuthSession();
-  generateBatch();
+  
+  // Set default date to Today
+  if (document.getElementById('attInputDate')) {
+    document.getElementById('attInputDate').value = new Date().toISOString().split('T')[0];
+  }
 };
