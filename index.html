@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -189,6 +190,7 @@
     <div class="nav-tabs" id="navbarTabs">
       <button class="nav-tab-btn active" id="btnTabAttendance" onclick="switchMainTab('attendanceView')">🚚 Fleet Attendance</button>
       <button class="nav-tab-btn" id="btnTabTrips" onclick="switchMainTab('dataEntryView')">🗂️ Middle Mile Command Center</button>
+      <button class="nav-tab-btn" id="btnTabDailyReport" onclick="switchMainTab('dailyReportView')">📊 Daily Performance & Analytics</button>
       <button class="nav-tab-btn" id="btnTabAdmin" onclick="switchMainTab('adminTabView')" style="display:none; color:#f59e0b;">👑 Admin Control</button>
     </div>
 
@@ -340,6 +342,16 @@
           </div>
 
           <div class="filter-group">
+            <label>📅 From Date:</label>
+            <input type="date" id="deFilterFrom" onchange="applyDataEntryFilters()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+          </div>
+
+          <div class="filter-group">
+            <label>📅 To Date:</label>
+            <input type="date" id="deFilterTo" onchange="applyDataEntryFilters()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+          </div>
+
+          <div class="filter-group">
             <label>🚛 Vehicle:</label>
             <select id="deVehicleFilter" onchange="applyDataEntryFilters()">
               <option value="ALL">All Vehicles</option>
@@ -364,12 +376,13 @@
           </div>
 
           <button class="btn btn-red" onclick="fetchGoogleSheetData()">🔄 Live Sync</button>
+          <button class="btn btn-green" onclick="exportDataEntryExcel()">📊 Export Excel</button>
 
           <input type="text" id="deSearchInput" placeholder="🔍 Search Store, Driver, Barcode..." onkeyup="applyDataEntryFilters()" style="margin-left: auto; width: 220px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
         </div>
 
         <div class="analytics-grid" id="deAnalyticsGrid">
-          <div class="analytics-card">
+          <div class="analytics-card" style="flex: 1 1 250px;">
             <h3>
               <span>📍 Top Stores Volume (Col D & Q)</span>
               <small style="color: var(--text-muted);" id="deStoreCountLbl">0 Stores</small>
@@ -388,7 +401,7 @@
             </div>
           </div>
 
-          <div class="analytics-card">
+          <div class="analytics-card" style="flex: 2 1 500px;">
             <h3>
               <span>🚚 Driver Fleet Metrics</span>
               <small style="color: var(--text-muted);" id="deDriverCountLbl">0 Drivers</small>
@@ -409,18 +422,18 @@
             </div>
           </div>
 
-          <div class="analytics-card">
+          <div class="analytics-card" style="flex: 0.8 1 220px;">
             <h3>
-              <span>❄️ Temperature Compliance (Col M)</span>
+              <span>❄️ Temp (Col M)</span>
               <small style="color: var(--text-muted);" id="deTempCountLbl">0 Audited</small>
             </h3>
             <div class="table-scroll-container">
               <table class="mini-table">
                 <thead>
                   <tr>
-                    <th>Compliance Zone</th>
+                    <th>Zone</th>
                     <th>Trips</th>
-                    <th>Breach Share</th>
+                    <th>Share</th>
                   </tr>
                 </thead>
                 <tbody id="deTempTableBody"></tbody>
@@ -466,7 +479,50 @@
       </div>
     </div>
 
-    <!-- VIEW 3: ADMIN CONTROL TAB -->
+    <!-- NEW VIEW: DAILY PERFORMANCE ANALYTICS -->
+    <div id="dailyReportView" class="tab-view">
+      <div class="page-container">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h1 class="page-title">📊 Daily Dispatch Performance & Volume Breakdown</h1>
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Comprehensive Daily Aggregated Dispatch Analytics, Totes, Pallets & Efficiency Ratios</div>
+          </div>
+          <button class="btn btn-green" onclick="exportDailyReportExcel()">📊 Export Daily Summary Excel</button>
+        </div>
+
+        <div class="analytics-card" style="padding:20px;">
+          <h3 style="margin-bottom:15px; font-size:14px;">📈 Daily Dispatch Volume Trends & Totes Breakdown</h3>
+          <div style="height:280px; position:relative;">
+            <canvas id="dailyVolumeChart"></canvas>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-container">
+            <table class="main-table">
+              <thead>
+                <tr>
+                  <th>Dispatch Date</th>
+                  <th>Dispatched Qty</th>
+                  <th>Total Pallets</th>
+                  <th>Total Totes</th>
+                  <th>Avg Items / Tote</th>
+                  <th>Avg Items / Pallet</th>
+                  <th>Stores Served</th>
+                  <th>Active Drivers</th>
+                  <th>Total Trips</th>
+                </tr>
+              </thead>
+              <tbody id="dailyReportTableBody">
+                <tr><td colspan="9" class="empty-msg">Loading daily breakdown analytics...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: ADMIN CONTROL TAB -->
     <div id="adminTabView" class="tab-view">
       <div class="page-container">
         <div>
@@ -474,7 +530,6 @@
           <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Manage Pending User Approval Requests & System Parameters</div>
         </div>
 
-        <!-- PENDING USER APPROVAL QUEUE -->
         <div class="table-card" style="border: 2px solid #38bdf8; margin-bottom: 20px;">
           <div style="padding:14px 18px; font-weight:800; font-size:13px; background:#0f172a; color:#38bdf8; border-bottom:1px solid var(--border-color); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
             <span>⏳ Pending Account Registration Requests Queue</span>
