@@ -11,6 +11,7 @@ let filteredAttendance = [];
 let globalDataEntryRaw = [];
 let filteredDataEntry = [];
 let remoteUsersList = [];
+let dailyChartInstance = null;
 
 /* THEME MANAGEMENT */
 function initTheme() {
@@ -139,7 +140,7 @@ async function validateLogin() {
 
   // Master Admin Fallback
   if (email === "admin@noon.com" && passcode === "admin123") {
-    const adminUser = { name: "Master Admin", email: "admin@noon.com", role: "ADMIN", tabs: ["attendance", "trips", "admin"] };
+    const adminUser = { name: "Master Admin", email: "admin@noon.com", role: "ADMIN", tabs: ["attendance", "trips", "dailyReport", "admin"] };
     sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(adminUser));
     unlockPortal(adminUser);
     return;
@@ -160,7 +161,7 @@ async function validateLogin() {
       return;
     }
 
-    matchedUser.tabs = matchedUser.role === 'ADMIN' ? ["attendance", "trips", "admin"] : ["attendance", "trips"];
+    matchedUser.tabs = matchedUser.role === 'ADMIN' ? ["attendance", "trips", "dailyReport", "admin"] : ["attendance", "trips", "dailyReport"];
     sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(matchedUser));
     unlockPortal(matchedUser);
   } else {
@@ -202,10 +203,11 @@ function buildDynamicNavTabs(user) {
   const tabDefinitions = {
     attendance: { id: 'btnTabAttendance', title: '🚚 Fleet Attendance', target: 'attendanceView' },
     trips: { id: 'btnTabTrips', title: '🗂️ Middle Mile Command Center', target: 'dataEntryView' },
+    dailyReport: { id: 'btnTabDailyReport', title: '📊 Daily Performance & Analytics', target: 'dailyReportView' },
     admin: { id: 'btnTabAdmin', title: '👑 Admin Control', target: 'adminTabView' }
   };
 
-  let allowedKeys = user.tabs || ['attendance', 'trips'];
+  let allowedKeys = user.tabs || ['attendance', 'trips', 'dailyReport'];
   if (user.role === 'ADMIN' && !allowedKeys.includes('admin')) {
     allowedKeys.push('admin');
   }
@@ -245,6 +247,8 @@ function switchMainTab(targetId) {
     fetchAttendanceSheetData();
   } else if (targetId === 'dataEntryView' && !globalDataEntryRaw.length) {
     fetchGoogleSheetData();
+  } else if (targetId === 'dailyReportView') {
+    renderDailyReportDashboard();
   } else if (targetId === 'adminTabView') {
     renderPendingUsersTable();
     renderAdminUserTable();
@@ -502,6 +506,8 @@ function populateFilterDropdowns() {
 
 function applyDataEntryFilters() {
   const selectedDate = document.getElementById('deDateFilter') ? document.getElementById('deDateFilter').value : 'ALL';
+  const fromDate = document.getElementById('deFilterFrom') ? document.getElementById('deFilterFrom').value : '';
+  const toDate = document.getElementById('deFilterTo') ? document.getElementById('deFilterTo').value : '';
   const selectedVehicle = document.getElementById('deVehicleFilter') ? document.getElementById('deVehicleFilter').value : 'ALL';
   const selectedTrip = document.getElementById('deTripFilter') ? document.getElementById('deTripFilter').value : 'ALL';
   const tempFilter = document.getElementById('deTempFilter') ? document.getElementById('deTempFilter').value : 'ALL';
@@ -514,6 +520,8 @@ function applyDataEntryFilters() {
     const tempVal = parseCleanNumber(row[12]);
 
     const matchDate = (selectedDate === "ALL" || dateVal === selectedDate);
+    const matchFrom = !fromDate || dateVal >= fromDate;
+    const matchTo = !toDate || dateVal <= toDate;
     const matchVehicle = (selectedVehicle === "ALL" || vehVal === selectedVehicle);
     const matchTrip = (selectedTrip === "ALL" || tripVal === selectedTrip);
     
@@ -524,10 +532,13 @@ function applyDataEntryFilters() {
 
     const matchQuery = query === "" || row.some(cell => String(cell).toLowerCase().includes(query));
 
-    return matchDate && matchVehicle && matchTrip && matchTemp && matchQuery;
+    return matchDate && matchFrom && matchTo && matchVehicle && matchTrip && matchTemp && matchQuery;
   });
 
   renderDataEntryDashboard();
+  if (document.getElementById('dailyReportView').classList.contains('active')) {
+    renderDailyReportDashboard();
+  }
 }
 
 function renderDataEntryDashboard() {
@@ -568,7 +579,6 @@ function renderDataEntryDashboard() {
   const criticalBreaches = temps.filter(t => t > 8).length;
   if (document.getElementById('deStatTempBreachSub')) document.getElementById('deStatTempBreachSub').innerText = `${criticalBreaches} Critical Breaches`;
 
-  // RESTORED ANALYTICS CARDS CALL
   renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps);
 
   if (filteredDataEntry.length === 0) {
@@ -613,7 +623,38 @@ function renderDataEntryDashboard() {
   });
 }
 
-/* RESTORED ANALYTICS CARDS ENGINE */
+function exportDataEntryExcel() {
+  let exportData = filteredDataEntry.map(r => ({
+    Date: formatExcelDate(r[0]),
+    Trip_ID: r[1],
+    DS_Code: r[2],
+    Store_Name: r[3],
+    Cluster: r[4],
+    Status: r[5],
+    Shift: r[6],
+    Task_Trip_NR: r[7],
+    Vehicle_No: r[8],
+    DA_Name: r[9],
+    Dispatcher: r[10],
+    Dock_No: r[11],
+    Temp_C: r[12],
+    Gate_Passes: r[13],
+    Physical_Totes: r[14],
+    Validation: r[15],
+    Qty_Dispatched: r[16],
+    Pallet_Barcodes: r[17],
+    Not_Dispatched: r[18],
+    KM: r[19],
+    Travel_Time: r[20]
+  }));
+
+  let ws = XLSX.utils.json_to_sheet(exportData);
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Dispatch_Operations_Data");
+  XLSX.writeFile(wb, `Dispatch_Operations_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+/* ANALYTICS CARDS ENGINE */
 function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
   const storeMap = {};
   const driverMap = {};
@@ -660,7 +701,7 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
       const dData = driverMap[dKey];
       driverBody.innerHTML += `
         <tr style="cursor:pointer;" onclick="openTripModal('${dData.tripId}')">
-          <td><strong>${dData.driver}</strong></td>
+          <td><strong>${dData.driver} (${dData.veh})</strong></td>
           <td><strong style="color:var(--blue-accent);">${dData.stores.size} Stores</strong></td>
           <td><strong>${dData.barcodes} Pallets</strong> / ${dData.totes} Totes</td>
           <td><strong style="color:var(--green-accent);">${dData.qty.toLocaleString()} QTY</strong></td>
@@ -726,7 +767,157 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
   }
 }
 
-/* RESTORED TRIP DETAILS MODAL */
+/* DAILY REPORT PERFORMANCE DASHBOARD & CHART */
+let dailySummaryAggregated = [];
+
+function renderDailyReportDashboard() {
+  const tbody = document.getElementById('dailyReportTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const dailyMap = {};
+
+  filteredDataEntry.forEach(r => {
+    const dDate = formatExcelDate(r[0]) || "Unknown Date";
+    const qty = parseCleanNumber(r[16]);
+    const totes = parseCleanNumber(r[14]);
+    const store = String(r[3] || "").trim();
+    const driver = String(r[9] || "").trim();
+    const tripId = String(r[7] || r[1] || "").trim();
+    
+    const barcodeStr = String(r[17] || "");
+    const barcodeCount = barcodeStr ? barcodeStr.split(/[,|]/).map(s=>s.trim()).filter(Boolean).length : 1;
+
+    if (!dailyMap[dDate]) {
+      dailyMap[dDate] = {
+        date: dDate,
+        qty: 0,
+        pallets: 0,
+        totes: 0,
+        stores: new Set(),
+        drivers: new Set(),
+        trips: new Set()
+      };
+    }
+
+    dailyMap[dDate].qty += qty;
+    dailyMap[dDate].totes += totes;
+    dailyMap[dDate].pallets += barcodeCount;
+    if (store) dailyMap[dDate].stores.add(store);
+    if (driver) dailyMap[dDate].drivers.add(driver);
+    if (tripId) dailyMap[dDate].trips.add(tripId);
+  });
+
+  const sortedDates = Object.keys(dailyMap).sort();
+  dailySummaryAggregated = sortedDates.map(d => dailyMap[d]);
+
+  if (dailySummaryAggregated.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-msg">No aggregated daily data available for selected criteria.</td></tr>`;
+    return;
+  }
+
+  dailySummaryAggregated.forEach(row => {
+    const avgItemsPerTote = row.totes > 0 ? (row.qty / row.totes).toFixed(1) : 0;
+    const avgItemsPerPallet = row.pallets > 0 ? (row.qty / row.pallets).toFixed(1) : 0;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${row.date}</strong></td>
+      <td><strong style="color:var(--green-accent); font-size:13px;">${row.qty.toLocaleString()} QTY</strong></td>
+      <td><strong>${row.pallets.toLocaleString()} Pallets</strong></td>
+      <td><strong>${row.totes.toLocaleString()} Totes</strong></td>
+      <td><span class="badge-wh" style="background:#e0f2fe; color:#0369a1;">${avgItemsPerTote} Items / Tote</span></td>
+      <td><span class="badge-wh" style="background:#fef3c7; color:#b45309;">${avgItemsPerPallet} Items / Pallet</span></td>
+      <td><strong>${row.stores.size} Stores</strong></td>
+      <td><strong>${row.drivers.size} Drivers</strong></td>
+      <td><strong>${row.trips.size} Trips</strong></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  renderDailyChart(dailySummaryAggregated);
+}
+
+function renderDailyChart(data) {
+  const ctx = document.getElementById('dailyVolumeChart');
+  if (!ctx) return;
+
+  if (dailyChartInstance) {
+    dailyChartInstance.destroy();
+  }
+
+  const labels = data.map(d => d.date);
+  const qtyData = data.map(d => d.qty);
+  const totesData = data.map(d => d.totes);
+
+  dailyChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Dispatched Quantity',
+          data: qtyData,
+          backgroundColor: 'rgba(34, 197, 94, 0.7)',
+          borderColor: '#22c55e',
+          borderWidth: 1,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Physical Totes Delivered',
+          data: totesData,
+          backgroundColor: 'rgba(168, 85, 247, 0.7)',
+          borderColor: '#a855f7',
+          borderWidth: 1,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: {
+          type: 'linear',
+          position: 'left',
+          ticks: { color: '#22c55e' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        y1: {
+          type: 'linear',
+          position: 'right',
+          ticks: { color: '#a855f7' },
+          grid: { drawOnChartArea: false }
+        }
+      },
+      plugins: {
+        legend: { labels: { color: '#f8fafc' } }
+      }
+    }
+  });
+}
+
+function exportDailyReportExcel() {
+  const exportData = dailySummaryAggregated.map(r => ({
+    Date: r.date,
+    Dispatched_Qty: r.qty,
+    Total_Pallets: r.pallets,
+    Total_Totes: r.totes,
+    Avg_Items_Per_Tote: r.totes > 0 ? (r.qty / r.totes).toFixed(1) : 0,
+    Avg_Items_Per_Pallet: r.pallets > 0 ? (r.qty / r.pallets).toFixed(1) : 0,
+    Stores_Served: r.stores.size,
+    Active_Drivers: r.drivers.size,
+    Total_Trips: r.trips.size
+  }));
+
+  let ws = XLSX.utils.json_to_sheet(exportData);
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Daily_Dispatch_Summary");
+  XLSX.writeFile(wb, `Daily_Dispatch_Summary_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+/* TRIP DETAILS MODAL */
 function openTripModal(indexOrTripId) {
   let tripRows = [];
   let targetTripId = "";
