@@ -14,7 +14,7 @@
 </head>
 <body>
 
-  <!-- AUTH OVERLAY -->
+  <!-- AUTHENTICATION OVERLAY -->
   <div id="authOverlay">
     <div class="speed-grid-lines"></div>
 
@@ -32,11 +32,14 @@
             <div class="side-door"></div>
           </div>
         </div>
+
         <div class="truck-cabin">
           <div class="cabin-window"></div>
           <div class="cabin-headlight"></div>
         </div>
+
         <div class="underglow-leds"></div>
+
         <div class="truck-wheel wheel-back-1"></div>
         <div class="truck-wheel wheel-back-2"></div>
         <div class="truck-wheel wheel-front"></div>
@@ -44,8 +47,7 @@
       <div class="truck-road-line"></div>
     </div>
 
-    <!-- LOGIN FORM -->
-    <div class="auth-card" id="loginCard">
+    <div class="auth-card">
       <div class="auth-brand">
         <span class="noon-txt">noon</span>
         <span class="ops-badge">MINUTES OPS</span>
@@ -64,44 +66,12 @@
 
       <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
       
-      <div style="display:flex; justify-content:space-between; margin-top:16px;">
-        <span class="forget-link" onclick="toggleAuthMode('register')">Create New Account</span>
-        <span class="forget-link" onclick="toggleForgetModal(true)">Forgot Security Passcode?</span>
-      </div>
+      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Security Passcode?</div>
       <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
-    </div>
-
-    <!-- REGISTER FORM -->
-    <div class="auth-card" id="registerCard" style="display:none;">
-      <div class="auth-brand">
-        <span class="noon-txt">noon</span>
-        <span class="ops-badge">REGISTER</span>
-      </div>
-      <p class="auth-sub">Request Portal Access Account</p>
-      
-      <div class="input-field-group">
-        <label>Full Name</label>
-        <input type="text" id="regNameInput" placeholder="e.g. Ahmed Hassan">
-      </div>
-
-      <div class="input-field-group">
-        <label>Corporate Work Email</label>
-        <input type="email" id="regEmailInput" placeholder="name@noon.com">
-      </div>
-
-      <div class="input-field-group">
-        <label>Choose Passcode</label>
-        <input type="password" id="regPasscodeInput" placeholder="••••••••" maxlength="30">
-      </div>
-
-      <button class="btn-login-submit" style="background:var(--green-accent);" onclick="submitRegistration()">Submit Registration Request ➔</button>
-      
-      <div class="forget-link" onclick="toggleAuthMode('login')" style="margin-top:16px; text-align:center;">← Back to Login Portal</div>
-      <div class="auth-error" id="regErrorMsg"></div>
     </div>
   </div>
 
-  <!-- FORGOT PASSWORD REQUEST MODAL -->
+  <!-- FORGOT PASSWORD MODAL -->
   <div id="forgetModal" style="display: none;">
     <div class="auth-card">
       <div class="auth-brand">
@@ -120,7 +90,7 @@
     </div>
   </div>
 
-  <!-- TRIP DETAILS MODAL -->
+  <!-- INTERACTIVE TRIP DETAILS MODAL -->
   <div id="tripDetailModal" class="modal-overlay" style="display: none;">
     <div class="trip-modal-card">
       <button class="modal-close-btn" onclick="closeTripModal()">✕</button>
@@ -470,7 +440,7 @@ TGI83K1H6MMBEG</textarea>
       </div>
     </div>
 
-    <!-- VIEW 3: TRIPS VIEWER EXECUTIVE COMMAND CENTER -->
+    <!-- VIEW 3: TRIPS COMMAND CENTER -->
     <div id="dataEntryView" class="tab-view">
       <div class="page-container">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -481,7 +451,6 @@ TGI83K1H6MMBEG</textarea>
           <span id="lastUpdatedTag" style="font-size:12px; font-weight:700; color:var(--text-muted); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);">Syncing with Google Sheets...</span>
         </div>
 
-        <!-- FULL STATS CARDS ROW -->
         <div class="stats-row">
           <div class="stat-card">
             <div class="val" id="deStatTrips">0</div>
@@ -515,7 +484,6 @@ TGI83K1H6MMBEG</textarea>
           </div>
         </div>
 
-        <!-- FILTERS BAR -->
         <div class="action-bar">
           <div class="filter-group">
             <label>📅 Date:</label>
@@ -555,7 +523,6 @@ TGI83K1H6MMBEG</textarea>
           <input type="text" id="deSearchInput" placeholder="🔍 Search Store, Driver, Barcode..." onkeyup="applyDataEntryFilters()" style="margin-left: auto; width: 220px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
         </div>
 
-        <!-- ANALYTICS DASHBOARD GRID -->
         <div class="analytics-grid" id="deAnalyticsGrid">
           <div class="analytics-card">
             <h3>
@@ -611,7 +578,6 @@ TGI83K1H6MMBEG</textarea>
           </div>
         </div>
 
-        <!-- MAIN DATA TABLE -->
         <div class="table-card">
           <div class="table-container">
             <table class="main-table">
@@ -653,34 +619,32 @@ TGI83K1H6MMBEG</textarea>
     <div id="adminTabView" class="tab-view">
       <div class="page-container">
         <div>
-          <h1 class="page-title">👑 Master Admin Control Center & Access Dispatcher</h1>
-          <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Manage Granular Tab Permissions, User Credentials & Handle Registration Requests</div>
+          <h1 class="page-title">👑 Master Admin Control Center</h1>
+          <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Manage Granular Tab Permissions, User Credentials & System Parameters</div>
         </div>
 
-        <!-- PENDING REGISTRATIONS QUEUE -->
-        <div class="table-card" style="border: 2px solid #38bdf8;">
-          <div style="padding:14px 18px; font-weight:800; font-size:13px; background:#0f172a; color:#38bdf8; border-bottom:1px solid var(--border-color); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
-            <span>⏳ Pending Account Registration Requests Queue</span>
-            <button class="btn btn-dark" style="padding: 4px 10px; font-size:11px;" onclick="renderPendingUsersTable()">🔄 Refresh Requests</button>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="val" id="adminStatUserCount">0</div>
+            <div class="lbl">Registered Accounts</div>
           </div>
-          <div class="table-container">
-            <table class="main-table">
-              <thead>
-                <tr>
-                  <th>Applicant Name</th>
-                  <th>Work Email</th>
-                  <th>Passcode Chosen</th>
-                  <th>Approval Action</th>
-                </tr>
-              </thead>
-              <tbody id="pendingUsersTableBody"></tbody>
-            </table>
+          <div class="stat-card">
+            <div class="val" id="adminStatActiveAdmins" style="color: var(--warning-yellow);">0</div>
+            <div class="lbl">Admin Access Granted</div>
+          </div>
+          <div class="stat-card">
+            <div class="val" id="adminStatActiveSessions" style="color: var(--blue-accent);">0</div>
+            <div class="lbl">Active Users Online</div>
+          </div>
+          <div class="stat-card">
+            <div class="val" id="adminStatSheetStatus" style="color: var(--green-accent);">ONLINE</div>
+            <div class="lbl">Google Sync Status</div>
           </div>
         </div>
 
-        <div class="analytics-grid" style="margin-top:20px;">
+        <div class="analytics-grid">
           <div class="admin-form-box">
-            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">➕ Add User & Assign Permissions</h3>
+            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">➕ Add User, Assign Tab Access & Credentials</h3>
             <div class="form-group">
               <label>User Email Address</label>
               <input type="email" id="newAdminEmail" placeholder="e.g. driver@noon.com">
@@ -696,6 +660,16 @@ TGI83K1H6MMBEG</textarea>
                 <option value="ADMIN">Admin (Full System Control)</option>
               </select>
             </div>
+
+            <div class="form-group">
+              <label>Allowed Tabs Permissions</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" id="accessBarcode" checked> Pallet Barcode Studio</label>
+                <label><input type="checkbox" id="accessPace" checked> Pace Picking Uploader</label>
+                <label><input type="checkbox" id="accessTrips" checked> Trips Viewer</label>
+              </div>
+            </div>
+
             <button class="btn btn-green" onclick="registerUserByAdmin()">💾 Save User Credentials</button>
           </div>
 
@@ -713,19 +687,20 @@ TGI83K1H6MMBEG</textarea>
           </div>
         </div>
 
-        <!-- AUTHORIZED USERS -->
-        <div class="table-card" style="margin-top:20px;">
+        <div class="table-card">
           <div style="padding:14px 18px; font-weight:800; font-size:13px; border-bottom:1px solid var(--border-color); text-transform:uppercase;">
-            👥 Authorized Active Users Database
+            👥 Authorized Users Database Access & Control
           </div>
           <div class="table-container">
             <table class="main-table">
               <thead>
                 <tr>
                   <th>User Email</th>
-                  <th>Passcode</th>
-                  <th>Role</th>
-                  <th>Status</th>
+                  <th>Personal Passcode</th>
+                  <th>Role Level</th>
+                  <th>Allowed Tabs Permissions</th>
+                  <th>Status State</th>
+                  <th>Toggle Access</th>
                   <th>Revoke Account</th>
                 </tr>
               </thead>
