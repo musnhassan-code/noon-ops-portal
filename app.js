@@ -38,136 +38,162 @@ function saveStoredUsers(usersArr) {
   localStorage.setItem('noon_ops_user_db', JSON.stringify(usersArr));
 }
 
-/* FLEET ATTENDANCE SYSTEM ENGINE */
-let attendanceDb = [
-  { date: "2026-08-24", vehicle: "CAI_AMB_T010", driver: "Diab", status: "PRESENT", notes: "Loaded 3 Totes - Evening Shift" },
-  { date: "2026-08-24", vehicle: "CAI_AMB_T005", driver: "Ibrahim Ali", status: "PRESENT", notes: "Loaded 2 Totes" },
-  { date: "2026-08-24", vehicle: "CAI_AMB_T003", driver: "Hassan Mahmoud", status: "MAINTENANCE", notes: "Oil Change" }
-];
+/* GOOGLE SHEETS ENGINES */
+let SHEET_ID = '1IRBTF7ijjyqb5JYLHYBhHVr94vm1hwyH0t9l9sxooQw';
+let GID_TRIPS = '1034377000';
+let GID_ATTENDANCE = '2092258043';
 
-function getStoredAttendance() {
-  let stored = localStorage.getItem('noon_ops_attendance_db');
-  if (!stored) {
-    localStorage.setItem('noon_ops_attendance_db', JSON.stringify(attendanceDb));
-    return attendanceDb;
+let globalAttendanceRaw = [];
+let filteredAttendance = [];
+let globalDataEntryRaw = [];
+let filteredDataEntry = [];
+
+/* FLEET ATTENDANCE LIVE GOOGLE SHEET PARSER */
+async function fetchAttendanceSheetData() {
+  const updatedTag = document.getElementById('attLastUpdatedTag');
+  if (updatedTag) updatedTag.innerText = "⏳ Syncing Attendance Sheet...";
+
+  const attendanceCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_ATTENDANCE}&t=${Date.now()}`;
+
+  try {
+    let response = await fetch(attendanceCsvUrl);
+    if (!response.ok) throw new Error("Attendance Fetch Failure");
+    
+    let csvText = await response.text();
+    let workbook = XLSX.read(csvText, { type: 'string' });
+    let sheet = workbook.Sheets[workbook.SheetNames[0]];
+    let matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+    if (matrix && matrix.length > 2) {
+      parseAttendanceMatrix(matrix);
+      if (updatedTag) updatedTag.innerText = `✅ Live Synced (${globalAttendanceRaw.length} Records) at ${new Date().toLocaleTimeString()}`;
+    }
+  } catch (err) {
+    console.error("Attendance Fetch Error:", err);
+    if (updatedTag) updatedTag.innerText = `⚠️ Attendance Connection Error.`;
   }
-  return JSON.parse(stored);
 }
 
-function saveStoredAttendance(db) {
-  localStorage.setItem('noon_ops_attendance_db', JSON.stringify(db));
-}
+function parseAttendanceMatrix(matrix) {
+  globalAttendanceRaw = [];
+  const headerDatesRow = matrix[0]; // Dates row
+  const headerColsRow = matrix[1];  // Status / Number Of Trips sub-header
 
-function saveAttendanceEntry() {
-  const dateVal = document.getElementById('attInputDate').value;
-  const vehicleVal = document.getElementById('attInputVehicle').value.trim().toUpperCase();
-  const driverVal = document.getElementById('attInputDriver').value.trim();
-  const statusVal = document.getElementById('attInputStatus').value;
-  const notesVal = document.getElementById('attInputNotes').value.trim();
+  for (let r = 2; r < matrix.length; r++) {
+    const row = matrix[r];
+    const hub = String(row[0] || "").trim();
+    const entity = String(row[1] || "").trim();
+    const plate = String(row[2] || "").trim();
+    const type = String(row[3] || "").trim();
+    const vehicleStatus = String(row[4] || "").trim();
 
-  if (!dateVal || !vehicleVal) {
-    alert("⚠️ Please select Date and enter Vehicle Number!");
-    return;
+    if (!plate) continue;
+
+    for (let c = 5; c < row.length; c += 2) {
+      let rawDateStr = String(headerDatesRow[c] || "").trim();
+      let statusVal = String(row[c] || "").trim();
+      let tripsVal = parseCleanNumber(row[c+1]);
+
+      if (!rawDateStr && c > 5) {
+        rawDateStr = String(headerDatesRow[c-1] || "").trim();
+      }
+
+      let parsedDate = parseStandardDate(rawDateStr);
+
+      if (parsedDate && statusVal) {
+        globalAttendanceRaw.push({
+          hub: hub,
+          entity: entity,
+          plate: plate,
+          type: type,
+          vehicleStatus: vehicleStatus,
+          date: parsedDate,
+          dateDisplay: rawDateStr,
+          attendanceStatus: statusVal,
+          tripsCount: tripsVal
+        });
+      }
+    }
   }
 
-  let db = getStoredAttendance();
-  db.unshift({
-    date: dateVal,
-    vehicle: vehicleVal,
-    driver: driverVal || "Unassigned",
-    status: statusVal,
-    notes: notesVal || "-"
+  applyAttendanceFilters();
+}
+
+function parseStandardDate(dateStr) {
+  if (!dateStr) return "";
+  let d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    return d.toISOString().split('T')[0];
+  }
+  return dateStr;
+}
+
+function applyAttendanceFilters() {
+  const fromDate = document.getElementById('attFilterFrom') ? document.getElementById('attFilterFrom').value : '';
+  const toDate = document.getElementById('attFilterTo') ? document.getElementById('attFilterTo').value : '';
+  const statusFilter = document.getElementById('attFilterStatus') ? document.getElementById('attFilterStatus').value : 'ALL';
+  const query = document.getElementById('attSearchInput') ? document.getElementById('attSearchInput').value.toLowerCase() : '';
+
+  filteredAttendance = globalAttendanceRaw.filter(item => {
+    let matchFrom = !fromDate || item.date >= fromDate;
+    let matchTo = !toDate || item.date <= toDate;
+    let matchStatus = statusFilter === 'ALL' || item.attendanceStatus.toLowerCase() === statusFilter.toLowerCase();
+    let matchQuery = !query || 
+      item.plate.toLowerCase().includes(query) || 
+      item.entity.toLowerCase().includes(query) || 
+      item.type.toLowerCase().includes(query) ||
+      item.hub.toLowerCase().includes(query);
+
+    return matchFrom && matchTo && matchStatus && matchQuery;
   });
-
-  saveStoredAttendance(db);
-  alert(`✅ Attendance saved for Vehicle: ${vehicleVal}`);
-  
-  document.getElementById('attInputVehicle').value = '';
-  document.getElementById('attInputDriver').value = '';
-  document.getElementById('attInputNotes').value = '';
 
   renderAttendanceDashboard();
 }
 
 function renderAttendanceDashboard() {
-  const tbody = document.getElementById('attHistoryTableBody');
+  const tbody = document.getElementById('attTableBody');
   if (!tbody) return;
+  tbody.innerHTML = '';
 
-  let db = getStoredAttendance();
-  const fromDate = document.getElementById('attFilterFrom') ? document.getElementById('attFilterFrom').value : '';
-  const toDate = document.getElementById('attFilterTo') ? document.getElementById('attFilterTo').value : '';
-  const search = document.getElementById('attFilterSearch') ? document.getElementById('attFilterSearch').value.toLowerCase() : '';
+  const uniquePlates = new Set(filteredAttendance.map(i => i.plate)).size;
+  const presentCount = filteredAttendance.filter(i => i.attendanceStatus.toLowerCase() === 'present').length;
+  const absentCount = filteredAttendance.filter(i => i.attendanceStatus.toLowerCase() === 'absent').length;
+  const totalTrips = filteredAttendance.reduce((acc, curr) => acc + curr.tripsCount, 0);
 
-  let filtered = db.filter(item => {
-    let matchFrom = !fromDate || item.date >= fromDate;
-    let matchTo = !toDate || item.date <= toDate;
-    let matchSearch = !search || item.vehicle.toLowerCase().includes(search) || item.driver.toLowerCase().includes(search);
-    return matchFrom && matchTo && matchSearch;
-  });
-
-  // Calculate Today Stats
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayRecords = db.filter(i => i.date === todayStr);
-  const presentCount = todayRecords.filter(i => i.status === 'PRESENT').length;
-  const absentCount = todayRecords.filter(i => i.status === 'ABSENT').length;
-  const standbyCount = todayRecords.filter(i => i.status === 'MAINTENANCE' || i.status === 'STANDBY').length;
-  const totalToday = todayRecords.length;
-  const rate = totalToday > 0 ? ((presentCount / totalToday) * 100).toFixed(0) : '0';
-
+  if (document.getElementById('attStatTotalVehicles')) document.getElementById('attStatTotalVehicles').innerText = uniquePlates;
   if (document.getElementById('attStatPresent')) document.getElementById('attStatPresent').innerText = presentCount;
   if (document.getElementById('attStatAbsent')) document.getElementById('attStatAbsent').innerText = absentCount;
-  if (document.getElementById('attStatStandby')) document.getElementById('attStatStandby').innerText = standbyCount;
-  if (document.getElementById('attStatRate')) document.getElementById('attStatRate').innerText = `${rate}%`;
-  if (document.getElementById('attLogCount')) document.getElementById('attLogCount').innerText = `${filtered.length} Records`;
+  if (document.getElementById('attStatTrips')) document.getElementById('attStatTrips').innerText = totalTrips;
 
-  tbody.innerHTML = '';
-  if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty-msg">No attendance records found matching filters.</td></tr>`;
+  if (filteredAttendance.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-msg">No attendance records found matching selected filters.</td></tr>`;
     return;
   }
 
-  filtered.forEach((item, index) => {
-    let badgeClass = "badge-status";
-    if (item.status === 'ABSENT') badgeClass = "badge-alert";
-    else if (item.status === 'MAINTENANCE' || item.status === 'STANDBY') badgeClass = "badge-wh";
+  filteredAttendance.forEach((item) => {
+    let isPresent = item.attendanceStatus.toLowerCase() === 'present';
+    let badgeStyle = isPresent ? 'background:#dcfce7; color:#166534;' : 'background:#fee2e2; color:#991b1b;';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
+      <td><strong>${item.hub}</strong></td>
+      <td>${item.entity}</td>
+      <td><strong style="color:var(--primary-red); font-size:13px;">${item.plate}</strong></td>
+      <td>${item.type}</td>
+      <td><span class="badge-wh">${item.vehicleStatus}</span></td>
       <td><strong>${item.date}</strong></td>
-      <td><strong style="color:var(--primary-red);">${item.vehicle}</strong></td>
-      <td>${item.driver}</td>
-      <td><span class="${badgeClass}">${item.status}</span></td>
-      <td>${item.notes}</td>
-      <td><button class="btn btn-dark" style="padding:3px 8px; font-size:10px;" onclick="deleteAttendanceRecord(${index})">🗑️ Delete</button></td>
+      <td><span class="badge-status" style="${badgeStyle}">${item.attendanceStatus}</span></td>
+      <td><strong>${item.tripsCount}</strong> Trips</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-function deleteAttendanceRecord(index) {
-  let db = getStoredAttendance();
-  db.splice(index, 1);
-  saveStoredAttendance(db);
-  renderAttendanceDashboard();
-}
-
-function filterAttendanceHistory() {
-  renderAttendanceDashboard();
-}
-
-function resetAttendanceFilters() {
-  if (document.getElementById('attFilterFrom')) document.getElementById('attFilterFrom').value = '';
-  if (document.getElementById('attFilterTo')) document.getElementById('attFilterTo').value = '';
-  if (document.getElementById('attFilterSearch')) document.getElementById('attFilterSearch').value = '';
-  renderAttendanceDashboard();
-}
-
 function exportAttendanceExcel() {
-  let db = getStoredAttendance();
-  let ws = XLSX.utils.json_to_sheet(db);
+  let ws = XLSX.utils.json_to_sheet(filteredAttendance);
   let wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Fleet_Attendance");
-  XLSX.writeFile(wb, `Fleet_Attendance_Log_${new Date().toISOString().split('T')[0]}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, "Attendance_Filter_Result");
+  XLSX.writeFile(wb, `Fleet_Attendance_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 /* AUTHENTICATION CONTROL */
@@ -292,8 +318,8 @@ function switchMainTab(targetId) {
     }
   });
 
-  if (targetId === 'attendanceView') {
-    renderAttendanceDashboard();
+  if (targetId === 'attendanceView' && !globalAttendanceRaw.length) {
+    fetchAttendanceSheetData();
   } else if (targetId === 'dataEntryView' && !globalDataEntryRaw.length) {
     fetchGoogleSheetData();
   } else if (targetId === 'adminTabView') {
@@ -314,12 +340,6 @@ function parseCleanNumber(val) {
   return isNaN(num) ? 0 : num;
 }
 
-/* GOOGLE SHEETS ENGINE */
-let SHEET_ID = '1IRBTF7ijjyqb5JYLHYBhHVr94vm1hwyH0t9l9sxooQw';
-let GID_ID = '1034377000';
-let globalDataEntryRaw = [];
-let filteredDataEntry = [];
-
 function saveSheetConfig() {
   const sheetInput = document.getElementById('cfgSheetIdInput');
   const gidInput = document.getElementById('cfgGidInput');
@@ -338,7 +358,7 @@ function saveSheetConfig() {
   localStorage.setItem('noon_ops_gid_id', newGid);
 
   SHEET_ID = newSheetId;
-  GID_ID = newGid;
+  GID_TRIPS = newGid;
 
   alert("✅ System parameters saved successfully! Re-syncing data...");
   fetchGoogleSheetData();
@@ -349,13 +369,13 @@ function loadSheetConfig() {
   const savedGid = localStorage.getItem('noon_ops_gid_id');
 
   if (savedSheetId) SHEET_ID = savedSheetId;
-  if (savedGid) GID_ID = savedGid;
+  if (savedGid) GID_TRIPS = savedGid;
 
   const sheetInput = document.getElementById('cfgSheetIdInput');
   const gidInput = document.getElementById('cfgGidInput');
 
   if (sheetInput) sheetInput.value = SHEET_ID;
-  if (gidInput) gidInput.value = GID_ID;
+  if (gidInput) gidInput.value = GID_TRIPS;
 }
 
 function formatExcelDate(val) {
@@ -373,11 +393,12 @@ function formatExcelDate(val) {
   return String(val).trim();
 }
 
+/* TRIPS GOOGLE SHEET ENGINE */
 async function fetchGoogleSheetData() {
   const updatedTag = document.getElementById('lastUpdatedTag');
   if (updatedTag) updatedTag.innerText = "⏳ Syncing Google Sheets API...";
 
-  const googleLiveCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_ID}&t=${Date.now()}`;
+  const googleLiveCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_TRIPS}&t=${Date.now()}`;
 
   try {
     let response = await fetch(googleLiveCsvUrl);
@@ -822,9 +843,5 @@ window.onload = function() {
   initTheme();
   loadSheetConfig();
   checkAuthSession();
-  
-  // Set default date to Today
-  if (document.getElementById('attInputDate')) {
-    document.getElementById('attInputDate').value = new Date().toISOString().split('T')[0];
-  }
+  fetchAttendanceSheetData();
 };
