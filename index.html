@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>noon MINUTES OPS | Portal Command Center</title>
+  <title>noon MINUTES OPS | Middle Mile Command Center</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bwip-js@3.0.4/dist/bwip-js-min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -24,7 +22,7 @@
           <div class="container-graphics">
             <div class="stripe-red"></div>
             <div class="stripe-dark"></div>
-            <div class="text-everything">EVERYTHING<br>IN MINUTES</div>
+            <div class="text-everything">MIDDLE MILE<br>OPS PORTAL</div>
             <div class="logo-wrap-mini">
               <span class="logo-noon">noon</span>
               <span class="logo-minutes">MINUTES</span>
@@ -50,9 +48,9 @@
     <div class="auth-card">
       <div class="auth-brand">
         <span class="noon-txt">noon</span>
-        <span class="ops-badge">MINUTES OPS</span>
+        <span class="ops-badge">MIDDLE MILE</span>
       </div>
-      <p class="auth-sub">Operations Intelligence & Fleet Dispatch Portal</p>
+      <p class="auth-sub">Middle Mile Fleet & Dispatch Command Portal</p>
       
       <div class="input-field-group">
         <label>Corporate Work Email</label>
@@ -64,9 +62,9 @@
         <input type="password" id="authPasscodeInput" placeholder="••••••••" maxlength="30" onkeypress="handleAuthKey(event)">
       </div>
 
-      <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
+      <button class="btn-login-submit" onclick="validateLogin()">Access Middle Mile Portal ➔</button>
       
-      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Security Passcode?</div>
+      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Passcode?</div>
       <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
     </div>
   </div>
@@ -78,7 +76,7 @@
         <span class="noon-txt">noon</span>
         <span class="ops-badge">RESET</span>
       </div>
-      <p class="auth-sub">Enter your email to dispatch a passcode reset request to Master Admin.</p>
+      <p class="auth-sub">Enter your email to send a passcode reset request to Master Admin.</p>
 
       <div class="input-field-group">
         <label>Registered Email Address</label>
@@ -86,7 +84,7 @@
       </div>
 
       <button class="btn-login-submit" onclick="submitPasswordResetRequest()">Send Reset Request</button>
-      <div class="forget-link" onclick="toggleForgetModal(false)">← Back to Login Portal</div>
+      <div class="forget-link" onclick="toggleForgetModal(false)">← Back to Login</div>
     </div>
   </div>
 
@@ -97,7 +95,7 @@
       
       <div class="trip-modal-header">
         <div class="trip-title-wrap">
-          <span class="trip-breadcrumb">Dispatch Historical ❯ <strong id="mTripIdHeader">-</strong></span>
+          <span class="trip-breadcrumb">Middle Mile Historical ❯ <strong id="mTripIdHeader">-</strong></span>
           <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
             <h2 id="mTripIdTitle">-</h2>
             <span class="badge-status" style="background:#dcfce7; color:#166534;">Dispatched Live</span>
@@ -126,7 +124,7 @@
 
       <div class="trip-body-grid">
         <div class="timeline-card">
-          <div class="card-sec-title">📍 Live Driver Route Map & Timeline</div>
+          <div class="card-sec-title">📍 Driver Middle Mile Route & Timeline</div>
           
           <div class="map-visual-box" id="mapVisualBox">
             <div class="map-path-line"></div>
@@ -154,14 +152,13 @@
   <header class="top-navbar">
     <div class="brand-logo">
       <span class="noon-text">noon</span>
-      <span class="ops-badge">MINUTES OPS</span>
+      <span class="ops-badge">MIDDLE MILE</span>
     </div>
 
     <div class="nav-tabs" id="navbarTabs">
-      <button class="nav-tab-btn active" id="btnTabBarcode" onclick="switchMainTab('barcodeStudio')">🏷️ Pallet Barcode Studio</button>
-      <button class="nav-tab-btn" id="btnTabPace" onclick="switchMainTab('pacePicking')">📦 Pace Picking Uploader</button>
-      <button class="nav-tab-btn" id="btnTabTrips" onclick="switchMainTab('dataEntry')">🗂️ Trips Command Center</button>
-      <button class="nav-tab-btn" id="btnTabAdmin" onclick="switchMainTab('adminTab')" style="display:none; color:#f59e0b;">👑 Admin Control</button>
+      <button class="nav-tab-btn active" id="btnTabAttendance" onclick="switchMainTab('attendanceView')">🚚 Fleet Attendance</button>
+      <button class="nav-tab-btn" id="btnTabTrips" onclick="switchMainTab('dataEntryView')">🗂️ Middle Mile Command Center</button>
+      <button class="nav-tab-btn" id="btnTabAdmin" onclick="switchMainTab('adminTabView')" style="display:none; color:#f59e0b;">👑 Admin Control</button>
     </div>
 
     <div style="display:flex; align-items:center; gap:12px;">
@@ -178,275 +175,133 @@
 
   <div class="main-view-content">
     
-    <!-- VIEW 1: PALLET BARCODE STUDIO -->
-    <div id="barcodeStudioView" class="tab-view active">
-      <div class="studio-container">
-        <aside class="sidebar" id="studioSidebar">
-          <div class="form-group">
-            <label>Display Zoom</label>
-            <div class="zoom-box">
-              <input type="range" id="zoomRange" min="0.3" max="2.0" step="0.1" value="1.0" oninput="updateZoom(this.value)">
-              <span class="zoom-val" id="zoomValText">100%</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Orientation</label>
-            <div class="radio-group">
-              <button class="radio-btn active" id="btnLandscape" onclick="setOrientation('landscape')">Landscape</button>
-              <button class="radio-btn" id="btnPortrait" onclick="setOrientation('portrait')">Portrait</button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="sizePresetSelect">Label Size Preset</label>
-            <select id="sizePresetSelect" onchange="handleSizePresetChange()">
-              <option value="50x30">50mm x 30mm (5cm × 3cm)</option>
-              <option value="25x25">25mm x 25mm (2.5cm × 2.5cm)</option>
-              <option value="100x150">100mm x 150mm (10cm × 15cm)</option>
-              <option value="100x50">100mm x 50mm (Standard Warehouse)</option>
-              <option value="CUSTOM">Custom Dimensions...</option>
-            </select>
-          </div>
-
-          <div class="form-row" id="customSizeRow" style="display: none;">
-            <div class="form-group">
-              <label for="customWidthInput">Width (mm)</label>
-              <input type="number" id="customWidthInput" value="50" min="10" max="300" onchange="applyCustomDimensions()">
-            </div>
-            <div class="form-group">
-              <label for="customHeightInput">Height (mm)</label>
-              <input type="number" id="customHeightInput" value="30" min="10" max="300" onchange="applyCustomDimensions()">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="warehouseSelect">Warehouse Node (EG WH)</label>
-            <select id="warehouseSelect" onchange="handleWarehouseChange()">
-              <option value="CAIIDO1">EGNIM | CAIIDO1</option>
-              <option value="GIZDO2">EGNIM | GIZDO2</option>
-              <option value="ALEX03">EGNIM | ALEX03</option>
-              <option value="CUSTOM">Custom Warehouse...</option>
-            </select>
-          </div>
-
-          <div class="form-group" id="customWhField" style="display: none;">
-            <label for="customWhInput">Custom WH Code</label>
-            <input type="text" id="customWhInput" placeholder="e.g. CAIIDO5">
-          </div>
-
-          <div class="form-group">
-            <label for="algoTypeSelect">Algorithm Type</label>
-            <select id="algoTypeSelect">
-              <option value="PALLET">Pallet FPI (FPI83H1D...)</option>
-              <option value="GLOBAL_TOTES">Global Tote (TGI83K1G...EG)</option>
-              <option value="GLOBAL_TOTES_MINUTES">Global Tote Minutes (TGI83K1H...EG)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="autoGenerateCount">Auto Generate Count</label>
-            <div class="form-row">
-              <input type="number" id="autoGenerateCount" value="10" min="1" max="500">
-              <button class="btn-action btn-auto" style="flex:1;" onclick="runAutoGeneration()">🎲 Generate</button>
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="symbologySelect">Barcode Symbology</label>
-            <select id="symbologySelect" onchange="updateSymbologyCardStat()">
-              <optgroup label="1D Barcodes">
-                <option value="CODE128">Code 128 (Standard)</option>
-                <option value="CODE39">Code 39</option>
-                <option value="EAN13">EAN-13 Retail</option>
-              </optgroup>
-              <optgroup label="2D Matrix Codes">
-                <option value="QR">QR Code (High Capacity)</option>
-                <option value="DATAMATRIX">Data Matrix (Logistics)</option>
-                <option value="PDF417">PDF417 (Manifest)</option>
-              </optgroup>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="codeListInput">Codes List (One code per line)</label>
-            <textarea id="codeListInput" placeholder="Paste codes here..." onkeyup="generateBatch()">FPI83H1DZS2KIX
-TGI83K1GHLZYEG
-TGI83K1H6MMBEG</textarea>
-          </div>
-
-          <div class="btn-stack">
-            <button class="btn-action btn-generate" onclick="generateBatch()">⚡ Render All Labels</button>
-            <button class="btn-action btn-print" onclick="window.print()">🖨️ Direct Print</button>
-          </div>
-        </aside>
-
-        <main class="studio-workspace">
-          <header class="studio-top-header">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
-                <span id="toggleIcon">◀</span> Controls Panel
-              </button>
-              <div class="page-title" style="font-size:18px;">Pallet Barcode Studio Generator</div>
-            </div>
-
-            <div class="zone-header-dropdown">
-              <span>🇪🇬</span>
-              <select id="zoneSelectTop" onchange="syncAndGenerateZone()">
-                <option value="AMB">AMB (Ambient Storage)</option>
-                <option value="UCH">UCH (Ultra Chill Zone)</option>
-                <option value="FZ">FZ (Freezer Storage)</option>
-                <option value="UH">UH (Ultra High Storage)</option>
-                <option value="CUSTOM">Custom Storage Zone...</option>
-              </select>
-            </div>
-          </header>
-
-          <div class="studio-body">
-            <div class="stats-row">
-              <div class="stat-card">
-                <div class="val" id="labelCount">0</div>
-                <div class="lbl">Labels Generated</div>
-              </div>
-              <div class="stat-card">
-                <div class="val" id="statZoneText" style="color: var(--blue-accent);">AMB</div>
-                <div class="lbl">Active Storage Zone</div>
-              </div>
-              <div class="stat-card">
-                <div class="val" id="statSymbologyText" style="color: var(--green-accent);">CODE128</div>
-                <div class="lbl">Barcode Symbology</div>
-              </div>
-            </div>
-
-            <div class="action-bar">
-              <input type="text" id="filterInput" placeholder="🔍 Search barcode / code..." onkeyup="filterLabels()" style="width:100%; padding:8px 12px; border:1px solid var(--border-color); border-radius:6px; outline:none;">
-            </div>
-
-            <div class="labels-viewport">
-              <div class="labels-grid" id="labelsGrid"></div>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
-
-    <!-- VIEW 2: PACE PICKING UPLOADER -->
-    <div id="pacePickingView" class="tab-view">
+    <!-- VIEW 1: FLEET DAILY ATTENDANCE LOG & HISTORICAL REGISTER -->
+    <div id="attendanceView" class="tab-view active">
       <div class="page-container">
-        <h1 class="page-title">Pace Picking Uploader</h1>
+        <div>
+          <h1 class="page-title">🚚 Fleet Daily Attendance & Loading Log</h1>
+          <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Record daily vehicle attendance, loading status, and track historical attendance records.</div>
+        </div>
 
+        <!-- ATTENDANCE STATS CARDS -->
         <div class="stats-row">
           <div class="stat-card">
-            <div class="val" id="statTotalQty">0</div>
-            <div class="lbl">Total QTY</div>
+            <div class="val" id="attStatPresent" style="color: var(--green-accent);">0</div>
+            <div class="lbl">Present & Loaded Today</div>
           </div>
           <div class="stat-card">
-            <div class="val" id="statUniqueSkus" style="color: var(--purple-accent);">0</div>
-            <div class="lbl">Unique SKUs</div>
+            <div class="val" id="attStatAbsent" style="color: var(--primary-red);">0</div>
+            <div class="lbl">Absent / Off</div>
           </div>
           <div class="stat-card">
-            <div class="val" id="statDestCount" style="color: var(--blue-accent);">0</div>
-            <div class="lbl">Destinations (DST)</div>
+            <div class="val" id="attStatStandby" style="color: var(--warning-yellow);">0</div>
+            <div class="lbl">Standby / Maintenance</div>
           </div>
           <div class="stat-card">
-            <div class="val" id="statSrcCount" style="color: var(--green-accent);">0</div>
-            <div class="lbl">Sources (SRC)</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="statTargetDateText" style="font-size: 20px; color: var(--primary-red);">-</div>
-            <div class="lbl">Target Ship Date</div>
+            <div class="val" id="attStatRate" style="color: var(--blue-accent);">0%</div>
+            <div class="lbl">Attendance Rate</div>
           </div>
         </div>
 
-        <div class="upload-box-compact" id="dropZone">
-          <div class="upload-compact-info">
-            <div class="upload-compact-icon">📁</div>
-            <div>
-              <div class="upload-compact-title">Click or Drag & Drop Pace Picking Batch File</div>
-              <div class="upload-compact-desc">Supports CSV or Excel files containing SKU, Destination WH, Source WH, and Quantities</div>
+        <div class="analytics-grid">
+          <!-- RECORD NEW ATTENDANCE FORM -->
+          <div class="admin-form-box">
+            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">📝 Mark Daily Vehicle Attendance</h3>
+            
+            <div class="form-group">
+              <label>Attendance Date</label>
+              <input type="date" id="attInputDate">
+            </div>
+
+            <div class="form-group">
+              <label>Vehicle Number (Plate Code)</label>
+              <input type="text" id="attInputVehicle" placeholder="e.g. 1234 - A B C / Truck 05">
+            </div>
+
+            <div class="form-group">
+              <label>Driver / DA Name</label>
+              <input type="text" id="attInputDriver" placeholder="e.g. Ibrahim Ali">
+            </div>
+
+            <div class="form-group">
+              <label>Attendance Status</label>
+              <select id="attInputStatus">
+                <option value="PRESENT">✅ Present & Loaded</option>
+                <option value="ABSENT">❌ Absent / No Show</option>
+                <option value="MAINTENANCE">🔧 Under Maintenance</option>
+                <option value="STANDBY">⏸️ Standby Reserve</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Remarks / Operations Notes</label>
+              <input type="text" id="attInputNotes" placeholder="Optional notes (e.g. Loaded 2 Totes, Shift 1)">
+            </div>
+
+            <button class="btn btn-green" onclick="saveAttendanceEntry()">💾 Save Attendance Record</button>
+          </div>
+
+          <!-- HISTORICAL FILTERS & EXPORT -->
+          <div class="admin-form-box">
+            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">🔍 Historical Attendance Search & Filter</h3>
+            
+            <div class="form-group">
+              <label>From Date</label>
+              <input type="date" id="attFilterFrom" onchange="filterAttendanceHistory()">
+            </div>
+
+            <div class="form-group">
+              <label>To Date</label>
+              <input type="date" id="attFilterTo" onchange="filterAttendanceHistory()">
+            </div>
+
+            <div class="form-group">
+              <label>Filter by Vehicle / Driver</label>
+              <input type="text" id="attFilterSearch" placeholder="Search vehicle no or driver name..." onkeyup="filterAttendanceHistory()">
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:10px;">
+              <button class="btn btn-dark" style="flex:1;" onclick="resetAttendanceFilters()">🔄 Reset Filters</button>
+              <button class="btn btn-red" style="flex:1;" onclick="exportAttendanceExcel()">📊 Export Excel</button>
             </div>
           </div>
-          <button class="btn btn-dark" style="pointer-events:none;">Browse File</button>
-          <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" />
         </div>
 
-        <div class="action-bar">
-          <button class="btn btn-red" onclick="processBatch()">🚀 Process & Sync Batch</button>
-          <button class="btn btn-auto" onclick="exportBatchCSV()">📥 Export CSV</button>
-          <button class="btn btn-green" onclick="exportBatchExcel()">📊 Export Excel</button>
-          <button class="btn btn-dark" onclick="exportBatchJSON()">💻 Export JSON</button>
-          <button class="btn btn-dark" onclick="clearData()" style="background:#64748b;">🗑️ Clear Data</button>
-          <input type="text" id="searchInput" placeholder="🔍 Search SKU / WH Code..." onkeyup="filterTable()" style="margin-left: auto; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
-        </div>
-
-        <div class="analytics-grid" id="analyticsGrid" style="display:none;">
-          <div class="analytics-card">
-            <h3>
-              <span>📍 Destinations Breakdown (DST WH)</span>
-              <small style="color: var(--text-muted);" id="dstTypesLbl">0 Types</small>
-            </h3>
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th>Destination WH</th>
-                  <th>SKU QTY</th>
-                  <th>Percentage</th>
-                </tr>
-              </thead>
-              <tbody id="dstTableBody"></tbody>
-            </table>
-          </div>
-
-          <div class="analytics-card">
-            <h3>
-              <span>🏬 Sources Breakdown (SRC WH)</span>
-              <small style="color: var(--text-muted);" id="srcTypesLbl">0 Types</small>
-            </h3>
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th>Source WH</th>
-                  <th>SKU QTY</th>
-                  <th>Percentage</th>
-                </tr>
-              </thead>
-              <tbody id="srcTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
+        <!-- ATTENDANCE HISTORICAL REGISTER TABLE -->
         <div class="table-card">
+          <div style="padding:14px 18px; font-weight:800; font-size:13px; border-bottom:1px solid var(--border-color); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+            <span>📜 Historical Vehicle Attendance Log</span>
+            <span id="attLogCount" class="badge-wh">0 Records</span>
+          </div>
           <div class="table-container">
             <table class="main-table">
               <thead>
                 <tr>
-                  <th>src_wh_code</th>
-                  <th>dst_wh_code</th>
-                  <th>target_ship_date</th>
-                  <th>target_ship_time</th>
-                  <th>id_partner</th>
-                  <th>sku</th>
-                  <th>quantity</th>
+                  <th>Date</th>
+                  <th>Vehicle Number</th>
+                  <th>Driver Name</th>
+                  <th>Attendance Status</th>
+                  <th>Notes / Shift Details</th>
+                  <th>Action</th>
                 </tr>
               </thead>
-              <tbody id="tableBody">
-                <tr>
-                  <td colspan="7" class="empty-msg">No pace picking batch loaded. Upload a file above.</td>
-                </tr>
+              <tbody id="attHistoryTableBody">
+                <tr><td colspan="6" class="empty-msg">No attendance records logged yet. Use the form above to record vehicle attendance.</td></tr>
               </tbody>
             </table>
           </div>
         </div>
+
       </div>
     </div>
 
-    <!-- VIEW 3: TRIPS COMMAND CENTER -->
+    <!-- VIEW 2: TRIPS COMMAND CENTER -->
     <div id="dataEntryView" class="tab-view">
       <div class="page-container">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <h1 class="page-title">Dispatch Operations Command Center</h1>
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Real-time Fleet Metrics & Multi-dimensional Google Sheets Analytics</div>
+            <h1 class="page-title">Middle Mile Operations Command Center</h1>
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Real-time Middle Mile Fleet Metrics & Google Sheets Analytics</div>
           </div>
           <span id="lastUpdatedTag" style="font-size:12px; font-weight:700; color:var(--text-muted); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);">Syncing with Google Sheets...</span>
         </div>
@@ -518,7 +373,6 @@ TGI83K1H6MMBEG</textarea>
 
           <button class="btn btn-red" onclick="fetchGoogleSheetData()">🔄 Live Sync</button>
           <button class="btn btn-green" onclick="exportFilteredDataEntryExcel()">📊 Export Excel</button>
-          <button class="btn btn-auto" onclick="exportFilteredDataEntryCSV()">📥 Export CSV</button>
 
           <input type="text" id="deSearchInput" placeholder="🔍 Search Store, Driver, Barcode..." onkeyup="applyDataEntryFilters()" style="margin-left: auto; width: 220px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
         </div>
@@ -615,12 +469,12 @@ TGI83K1H6MMBEG</textarea>
       </div>
     </div>
 
-    <!-- VIEW 4: ADMIN CONTROL TAB -->
+    <!-- VIEW 3: ADMIN CONTROL TAB -->
     <div id="adminTabView" class="tab-view">
       <div class="page-container">
         <div>
           <h1 class="page-title">👑 Master Admin Control Center</h1>
-          <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Manage Granular Tab Permissions, User Credentials & System Parameters</div>
+          <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Manage Middle Mile Access Controls & System Parameters</div>
         </div>
 
         <div class="stats-row">
@@ -633,10 +487,6 @@ TGI83K1H6MMBEG</textarea>
             <div class="lbl">Admin Access Granted</div>
           </div>
           <div class="stat-card">
-            <div class="val" id="adminStatActiveSessions" style="color: var(--blue-accent);">0</div>
-            <div class="lbl">Active Users Online</div>
-          </div>
-          <div class="stat-card">
             <div class="val" id="adminStatSheetStatus" style="color: var(--green-accent);">ONLINE</div>
             <div class="lbl">Google Sync Status</div>
           </div>
@@ -644,7 +494,7 @@ TGI83K1H6MMBEG</textarea>
 
         <div class="analytics-grid">
           <div class="admin-form-box">
-            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">➕ Add User, Assign Tab Access & Credentials</h3>
+            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">➕ Add User Access</h3>
             <div class="form-group">
               <label>User Email Address</label>
               <input type="email" id="newAdminEmail" placeholder="e.g. driver@noon.com">
@@ -660,16 +510,6 @@ TGI83K1H6MMBEG</textarea>
                 <option value="ADMIN">Admin (Full System Control)</option>
               </select>
             </div>
-
-            <div class="form-group">
-              <label>Allowed Tabs Permissions</label>
-              <div class="checkbox-group">
-                <label><input type="checkbox" id="accessBarcode" checked> Pallet Barcode Studio</label>
-                <label><input type="checkbox" id="accessPace" checked> Pace Picking Uploader</label>
-                <label><input type="checkbox" id="accessTrips" checked> Trips Viewer</label>
-              </div>
-            </div>
-
             <button class="btn btn-green" onclick="registerUserByAdmin()">💾 Save User Credentials</button>
           </div>
 
@@ -689,7 +529,7 @@ TGI83K1H6MMBEG</textarea>
 
         <div class="table-card">
           <div style="padding:14px 18px; font-weight:800; font-size:13px; border-bottom:1px solid var(--border-color); text-transform:uppercase;">
-            👥 Authorized Users Database Access & Control
+            👥 Authorized Middle Mile Users
           </div>
           <div class="table-container">
             <table class="main-table">
@@ -698,9 +538,7 @@ TGI83K1H6MMBEG</textarea>
                   <th>User Email</th>
                   <th>Personal Passcode</th>
                   <th>Role Level</th>
-                  <th>Allowed Tabs Permissions</th>
                   <th>Status State</th>
-                  <th>Toggle Access</th>
                   <th>Revoke Account</th>
                 </tr>
               </thead>
