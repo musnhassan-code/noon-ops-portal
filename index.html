@@ -479,25 +479,127 @@
       </div>
     </div>
 
-    <!-- NEW VIEW: DAILY PERFORMANCE ANALYTICS -->
+    <!-- VIEW 3: DAILY PERFORMANCE & ADVANCED ANALYTICS -->
     <div id="dailyReportView" class="tab-view">
       <div class="page-container">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div>
-            <h1 class="page-title">📊 Daily Dispatch Performance & Volume Breakdown</h1>
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Comprehensive Daily Aggregated Dispatch Analytics, Totes, Pallets & Efficiency Ratios</div>
+            <h1 class="page-title">📊 Daily Dispatch Performance & Volume Analytics</h1>
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Comprehensive Aggregated Key Performance Metrics, Operational Heatmaps & Dynamic Trends</div>
           </div>
-          <button class="btn btn-green" onclick="exportDailyReportExcel()">📊 Export Daily Summary Excel</button>
+          <button class="btn btn-green" onclick="exportDailyReportExcel()">📊 Export Daily Analytics Excel</button>
         </div>
 
-        <div class="analytics-card" style="padding:20px;">
-          <h3 style="margin-bottom:15px; font-size:14px;">📈 Daily Dispatch Volume Trends & Totes Breakdown</h3>
-          <div style="height:280px; position:relative;">
-            <canvas id="dailyVolumeChart"></canvas>
+        <!-- DYNAMIC FILTER BAR FOR DAILY ANALYTICS -->
+        <div class="action-bar">
+          <div class="filter-group">
+            <label>🎯 Filter Mode:</label>
+            <select id="rptFilterMode" onchange="toggleDailyFilterMode()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px; font-weight:800;">
+              <option value="RANGE">Date Range (From / To)</option>
+              <option value="SINGLE">Single Day Select</option>
+            </select>
+          </div>
+
+          <div class="filter-group" id="rptSingleGroup" style="display:none;">
+            <label>📅 Select Date:</label>
+            <select id="rptSingleDateSelect" onchange="renderDailyReportDashboard()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+              <option value="ALL">All Dates</option>
+            </select>
+          </div>
+
+          <div class="filter-group" id="rptRangeFromGroup">
+            <label>📅 From Date:</label>
+            <input type="date" id="rptFilterFrom" onchange="renderDailyReportDashboard()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+          </div>
+
+          <div class="filter-group" id="rptRangeToGroup">
+            <label>📅 To Date:</label>
+            <input type="date" id="rptFilterTo" onchange="renderDailyReportDashboard()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+          </div>
+
+          <button class="btn btn-red" onclick="renderDailyReportDashboard()">🔄 Refresh Daily Metrics</button>
+        </div>
+
+        <!-- KPI SUMMARY CARDS FOR DAILY METRICS -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="val" id="rptKpiQty" style="color: var(--green-accent);">0</div>
+            <div class="lbl">Total Dispatched QTY</div>
+            <div class="sub-info" id="rptKpiQtySub">Selected Range</div>
+          </div>
+          <div class="stat-card">
+            <div class="val" id="rptKpiPallets" style="color: var(--blue-accent);">0</div>
+            <div class="lbl">Total Pallets</div>
+            <div class="sub-info" id="rptKpiPalletsSub">Barcodes Count</div>
+          </div>
+          <div class="stat-card">
+            <div class="val" id="rptKpiTotes" style="color: var(--purple-accent);">0</div>
+            <div class="lbl">Total Totes</div>
+            <div class="sub-info" id="rptKpiTotesSub">Physical Load</div>
+          </div>
+          <div class="stat-card">
+            <div class="val" id="rptKpiItemsPerTote" style="color: var(--warning-yellow);">0.0</div>
+            <div class="lbl">Avg Items / Tote</div>
+            <div class="sub-info">Load Efficiency Rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="val" id="rptKpiItemsPerPallet" style="color: #0284c7;">0.0</div>
+            <div class="lbl">Avg Items / Pallet</div>
+            <div class="sub-info">Volume Density</div>
+          </div>
+          <div class="stat-card">
+            <div class="val" id="rptKpiStores">0</div>
+            <div class="lbl">Stores Served</div>
+            <div class="sub-info" id="rptKpiDrivers">0 Drivers</div>
           </div>
         </div>
 
+        <!-- TWO DYNAMIC CHARTS SIDE BY SIDE -->
+        <div class="analytics-grid">
+          <div class="analytics-card" style="flex: 1 1 500px; padding:20px;">
+            <h3 style="font-size:13px; font-weight:800; text-transform:uppercase;">📈 Daily Volume Trends & Totes Breakdown</h3>
+            <div style="height:260px; position:relative; margin-top:10px;">
+              <canvas id="dailyVolumeChart"></canvas>
+            </div>
+          </div>
+
+          <div class="analytics-card" style="flex: 1 1 400px; padding:20px;">
+            <h3 style="font-size:13px; font-weight:800; text-transform:uppercase;">⚡ Efficiency Ratio & Stores Served Trend</h3>
+            <div style="height:260px; position:relative; margin-top:10px;">
+              <canvas id="dailyEfficiencyChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- OPERATIONAL HEATMAP MATRIX CARD -->
+        <div class="table-card" style="padding:20px;">
+          <h3 style="font-size:13px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+            <span>🔥 Operational Dispatch Intensity Heatmap</span>
+            <small style="color:var(--text-muted); font-size:11px;">Volume Density Distribution</small>
+          </h3>
+          <div class="table-container">
+            <table class="mini-table" id="heatmapMatrixTable">
+              <thead>
+                <tr id="heatmapTableHead">
+                  <th>Dispatch Date</th>
+                  <th>Shift 1 (Morning)</th>
+                  <th>Shift 2 (Afternoon)</th>
+                  <th>Shift 3 (Night)</th>
+                  <th>Peak Intensity Zone</th>
+                </tr>
+              </thead>
+              <tbody id="heatmapTableBody">
+                <tr><td colspan="5" class="empty-msg">Calculating Operational Heatmap...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- DAILY BREAKDOWN MAIN TABLE -->
         <div class="table-card">
+          <div style="padding:14px 18px; font-weight:800; font-size:13px; border-bottom:1px solid var(--border-color); text-transform:uppercase;">
+            📋 Aggregated Daily Operations Summary Log
+          </div>
           <div class="table-container">
             <table class="main-table">
               <thead>
@@ -514,11 +616,12 @@
                 </tr>
               </thead>
               <tbody id="dailyReportTableBody">
-                <tr><td colspan="9" class="empty-msg">Loading daily breakdown analytics...</td></tr>
+                <tr><td colspan="9" class="empty-msg">Loading aggregated daily analytics...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
+
       </div>
     </div>
 
