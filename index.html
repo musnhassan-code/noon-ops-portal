@@ -14,14 +14,13 @@
 </head>
 <body>
 
-  <!-- HIGH-END AUTHENTICATION OVERLAY WITH ANIMATED NOON JUMBO TRUCK -->
+  <!-- AUTHENTICATION OVERLAY WITH LOGIN & REGISTRATION -->
   <div id="authOverlay">
     <div class="speed-grid-lines"></div>
 
-    <!-- ANIMATED REALISTIC NOON MINUTES JUMBO TRUCK -->
+    <!-- ANIMATED NOON TRUCK -->
     <div class="jumbo-truck-container">
       <div class="jumbo-truck">
-        <!-- TRUCK CARGO CONTAINER (LEFT SIDE) -->
         <div class="truck-container-box">
           <div class="container-graphics">
             <div class="stripe-red"></div>
@@ -34,17 +33,11 @@
             <div class="side-door"></div>
           </div>
         </div>
-
-        <!-- TRUCK CABIN (RIGHT SIDE - FRONT DIRECTION) -->
         <div class="truck-cabin">
           <div class="cabin-window"></div>
           <div class="cabin-headlight"></div>
         </div>
-
-        <!-- UNDERGLOW LEDS -->
         <div class="underglow-leds"></div>
-
-        <!-- WHEELS -->
         <div class="truck-wheel wheel-back-1"></div>
         <div class="truck-wheel wheel-back-2"></div>
         <div class="truck-wheel wheel-front"></div>
@@ -53,7 +46,7 @@
     </div>
 
     <!-- LOGIN FORM CARD -->
-    <div class="auth-card">
+    <div class="auth-card" id="loginCard">
       <div class="auth-brand">
         <span class="noon-txt">noon</span>
         <span class="ops-badge">MINUTES OPS</span>
@@ -72,12 +65,44 @@
 
       <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
       
-      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Security Passcode?</div>
-      <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
+      <div style="display:flex; justify-content:space-between; margin-top:16px;">
+        <span class="forget-link" onclick="toggleAuthMode('register')">Create New Account</span>
+        <span class="forget-link" onclick="toggleForgetModal(true)">Forgot Passcode?</span>
+      </div>
+      <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or account pending approval.</div>
+    </div>
+
+    <!-- REGISTER FORM CARD -->
+    <div class="auth-card" id="registerCard" style="display:none;">
+      <div class="auth-brand">
+        <span class="noon-txt">noon</span>
+        <span class="ops-badge">REGISTER</span>
+      </div>
+      <p class="auth-sub">Request Portal Access Account</p>
+      
+      <div class="input-field-group">
+        <label>Full Name</label>
+        <input type="text" id="regNameInput" placeholder="e.g. Ahmed Hassan">
+      </div>
+
+      <div class="input-field-group">
+        <label>Corporate Work Email</label>
+        <input type="email" id="regEmailInput" placeholder="name@noon.com">
+      </div>
+
+      <div class="input-field-group">
+        <label>Choose Passcode</label>
+        <input type="password" id="regPasscodeInput" placeholder="••••••••" maxlength="30">
+      </div>
+
+      <button class="btn-login-submit" style="background:var(--green-accent);" onclick="submitRegistration()">Submit Registration Request ➔</button>
+      
+      <div class="forget-link" onclick="toggleAuthMode('login')" style="margin-top:16px;">← Back to Login</div>
+      <div class="auth-error" id="regErrorMsg" style="background:rgba(34,197,94,0.1); color:#4ade80;"></div>
     </div>
   </div>
 
-  <!-- FORGOT PASSWORD REQUEST MODAL -->
+  <!-- FORGOT PASSWORD MODAL -->
   <div id="forgetModal" style="display: none;">
     <div class="auth-card">
       <div class="auth-brand">
@@ -96,7 +121,7 @@
     </div>
   </div>
 
-  <!-- INTERACTIVE TRIP DETAILS MODAL -->
+  <!-- TRIP DETAILS MODAL -->
   <div id="tripDetailModal" class="modal-overlay" style="display: none;">
     <div class="trip-modal-card">
       <button class="modal-close-btn" onclick="closeTripModal()">✕</button>
@@ -131,28 +156,22 @@
       </div>
 
       <div class="trip-body-grid">
-        <!-- LEFT: TIMELINE & LIVE MAP ROUTE WITH ANIMATED VAN -->
         <div class="timeline-card">
           <div class="card-sec-title">📍 Live Driver Route Map & Timeline</div>
-          
-          <!-- LIVE ANIMATED ROUTE MAP -->
           <div class="map-visual-box" id="mapVisualBox">
             <div class="map-path-line"></div>
             <div class="map-mini-van">
               <div class="mini-van-body">noon</div>
             </div>
           </div>
-
           <ul class="timeline-list" id="mTimelineList"></ul>
         </div>
 
-        <!-- RIGHT: PALLETS & TOTES BREAKDOWN -->
         <div class="pallets-slide-card">
           <div class="card-sec-title" style="display:flex; justify-content:space-between; align-items:center;">
             <span>📦 Loaded Pallets / Barcodes</span>
             <span id="mPalletCountTag" class="badge-role" style="background:var(--primary-red); font-size:10px;">0 Barcodes</span>
           </div>
-
           <div class="pallet-items-list" id="mPalletsList"></div>
         </div>
       </div>
@@ -218,70 +237,19 @@
             </select>
           </div>
 
-          <div class="form-row" id="customSizeRow" style="display: none;">
-            <div class="form-group">
-              <label for="customWidthInput">Width (mm)</label>
-              <input type="number" id="customWidthInput" value="50" min="10" max="300" onchange="applyCustomDimensions()">
-            </div>
-            <div class="form-group">
-              <label for="customHeightInput">Height (mm)</label>
-              <input type="number" id="customHeightInput" value="30" min="10" max="300" onchange="applyCustomDimensions()">
-            </div>
-          </div>
-
           <div class="form-group">
             <label for="warehouseSelect">Warehouse Node (EG WH)</label>
             <select id="warehouseSelect" onchange="handleWarehouseChange()">
               <option value="CAIIDO1">EGNIM | CAIIDO1</option>
               <option value="GIZDO2">EGNIM | GIZDO2</option>
-              <option value="ALEX03">EGNIM | ALEX03</option>
-              <option value="CUSTOM">Custom Warehouse...</option>
-            </select>
-          </div>
 
-          <div class="form-group" id="customWhField" style="display: none;">
-            <label for="customWhInput">Custom WH Code</label>
-            <input type="text" id="customWhInput" placeholder="e.g. CAIIDO5">
-          </div>
-
-          <div class="form-group">
-            <label for="algoTypeSelect">Algorithm Type</label>
-            <select id="algoTypeSelect">
-              <option value="PALLET">Pallet FPI (FPI83H1D...)</option>
-              <option value="GLOBAL_TOTES">Global Tote (TGI83K1G...EG)</option>
-              <option value="GLOBAL_TOTES_MINUTES">Global Tote Minutes (TGI83K1H...EG)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="autoGenerateCount">Auto Generate Count</label>
-            <div class="form-row">
-              <input type="number" id="autoGenerateCount" value="10" min="1" max="500">
-              <button class="btn-action btn-auto" style="flex:1;" onclick="runAutoGeneration()">🎲 Generate</button>
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="symbologySelect">Barcode Symbology</label>
-            <select id="symbologySelect" onchange="updateSymbologyCardStat()">
-              <optgroup label="1D Barcodes">
-                <option value="CODE128">Code 128 (Standard)</option>
-                <option value="CODE39">Code 39</option>
-                <option value="EAN13">EAN-13 Retail</option>
-              </optgroup>
-              <optgroup label="2D Matrix Codes">
-                <option value="QR">QR Code (High Capacity)</option>
-                <option value="DATAMATRIX">Data Matrix (Logistics)</option>
-                <option value="PDF417">PDF417 (Manifest)</option>
-              </optgroup>
             </select>
           </div>
 
           <div class="form-group">
             <label for="codeListInput">Codes List (One code per line)</label>
             <textarea id="codeListInput" placeholder="Paste codes here..." onkeyup="generateBatch()">FPI83H1DZS2KIX
-TGI83K1GHLZYEG
-TGI83K1H6MMBEG</textarea>
+TGI83K1GHLZYEG</textarea>
           </div>
 
           <div class="btn-stack">
@@ -298,39 +266,9 @@ TGI83K1H6MMBEG</textarea>
               </button>
               <div class="page-title" style="font-size:18px;">Pallet Barcode Studio Generator</div>
             </div>
-
-            <div class="zone-header-dropdown">
-              <span>🇪🇬</span>
-              <select id="zoneSelectTop" onchange="syncAndGenerateZone()">
-                <option value="AMB">AMB (Ambient Storage)</option>
-                <option value="UCH">UCH (Ultra Chill Zone)</option>
-                <option value="FZ">FZ (Freezer Storage)</option>
-                <option value="UH">UH (Ultra High Storage)</option>
-                <option value="CUSTOM">Custom Storage Zone...</option>
-              </select>
-            </div>
           </header>
 
           <div class="studio-body">
-            <div class="stats-row">
-              <div class="stat-card">
-                <div class="val" id="labelCount">0</div>
-                <div class="lbl">Labels Generated</div>
-              </div>
-              <div class="stat-card">
-                <div class="val" id="statZoneText" style="color: var(--blue-accent);">AMB</div>
-                <div class="lbl">Active Storage Zone</div>
-              </div>
-              <div class="stat-card">
-                <div class="val" id="statSymbologyText" style="color: var(--green-accent);">CODE128</div>
-                <div class="lbl">Barcode Symbology</div>
-              </div>
-            </div>
-
-            <div class="action-bar">
-              <input type="text" id="filterInput" placeholder="🔍 Search barcode / code..." onkeyup="filterLabels()" style="width:100%; padding:8px 12px; border:1px solid var(--border-color); border-radius:6px; outline:none;">
-            </div>
-
             <div class="labels-viewport">
               <div class="labels-grid" id="labelsGrid"></div>
             </div>
@@ -343,248 +281,27 @@ TGI83K1H6MMBEG</textarea>
     <div id="pacePickingView" class="tab-view">
       <div class="page-container">
         <h1 class="page-title">Pace Picking Uploader</h1>
-
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="val" id="statTotalQty">0</div>
-            <div class="lbl">Total QTY</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="statUniqueSkus" style="color: var(--purple-accent);">0</div>
-            <div class="lbl">Unique SKUs</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="statDestCount" style="color: var(--blue-accent);">0</div>
-            <div class="lbl">Destinations (DST)</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="statSrcCount" style="color: var(--green-accent);">0</div>
-            <div class="lbl">Sources (SRC)</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="statTargetDateText" style="font-size: 20px; color: var(--primary-red);">-</div>
-            <div class="lbl">Target Ship Date</div>
-          </div>
-        </div>
-
         <div class="upload-box-compact" id="dropZone">
-          <div class="upload-compact-info">
-            <div class="upload-compact-icon">📁</div>
-            <div>
-              <div class="upload-compact-title">Click or Drag & Drop Pace Picking Batch File</div>
-              <div class="upload-compact-desc">Supports CSV or Excel files containing SKU, Destination WH, Source WH, and Quantities</div>
-            </div>
-          </div>
-          <button class="btn btn-dark" style="pointer-events:none;">Browse File</button>
+          <div>Drag & Drop Pace Picking Batch File</div>
           <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" />
-        </div>
-
-        <div class="action-bar">
-          <button class="btn btn-red" onclick="processBatch()">🚀 Process & Sync Batch</button>
-          <button class="btn btn-auto" onclick="exportBatchCSV()">📥 Export CSV</button>
-          <button class="btn btn-green" onclick="exportBatchExcel()">📊 Export Excel</button>
-          <button class="btn btn-dark" onclick="exportBatchJSON()">💻 Export JSON</button>
-          <button class="btn btn-dark" onclick="clearData()" style="background:#64748b;">🗑️ Clear Data</button>
-          <input type="text" id="searchInput" placeholder="🔍 Search SKU / WH Code..." onkeyup="filterTable()" style="margin-left: auto; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
-        </div>
-
-        <div class="analytics-grid" id="analyticsGrid" style="display:none;">
-          <div class="analytics-card">
-            <h3>
-              <span>📍 Destinations Breakdown (DST WH)</span>
-              <small style="color: var(--text-muted);" id="dstTypesLbl">0 Types</small>
-            </h3>
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th>Destination WH</th>
-                  <th>SKU QTY</th>
-                  <th>Percentage</th>
-                </tr>
-              </thead>
-              <tbody id="dstTableBody"></tbody>
-            </table>
-          </div>
-
-          <div class="analytics-card">
-            <h3>
-              <span>🏬 Sources Breakdown (SRC WH)</span>
-              <small style="color: var(--text-muted);" id="srcTypesLbl">0 Types</small>
-            </h3>
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th>Source WH</th>
-                  <th>SKU QTY</th>
-                  <th>Percentage</th>
-                </tr>
-              </thead>
-              <tbody id="srcTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="table-card">
-          <div class="table-container">
-            <table class="main-table">
-              <thead>
-                <tr>
-                  <th>src_wh_code</th>
-                  <th>dst_wh_code</th>
-                  <th>target_ship_date</th>
-                  <th>target_ship_time</th>
-                  <th>id_partner</th>
-                  <th>sku</th>
-                  <th>quantity</th>
-                </tr>
-              </thead>
-              <tbody id="tableBody">
-                <tr>
-                  <td colspan="7" class="empty-msg">No pace picking batch loaded. Upload a file above.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
     </div>
 
-    <!-- VIEW 3: TRIPS VIEWER EXECUTIVE COMMAND CENTER -->
+    <!-- VIEW 3: TRIPS COMMAND CENTER -->
     <div id="dataEntryView" class="tab-view">
       <div class="page-container">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
             <h1 class="page-title">Dispatch Operations Command Center</h1>
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Real-time Fleet Metrics & Multi-dimensional Google Sheets Analytics</div>
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Real-time Fleet Metrics & Google Sheets Analytics</div>
           </div>
-          <span id="lastUpdatedTag" style="font-size:12px; font-weight:700; color:var(--text-muted); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);">Syncing with Google Sheets...</span>
-        </div>
-
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="val" id="deStatTrips">0</div>
-            <div class="lbl">Total Trips Loaded</div>
-            <div class="sub-info" id="deStatTripsSub">0 Total Rows</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="deStatVehicles" style="color: var(--blue-accent);">0</div>
-            <div class="lbl">Active Fleet</div>
-            <div class="sub-info" id="deStatVehiclesSub">0 Assigned Drivers</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="deStatTotes" style="color: var(--purple-accent);">0</div>
-            <div class="lbl">Physical Totes</div>
-            <div class="sub-info" id="deStatTotesSub">0 Avg / Trip</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="deStatDispatchedQty" style="color: var(--green-accent);">0</div>
-            <div class="lbl">Dispatched QTY</div>
-            <div class="sub-info" id="deStatDispRatioSub">0% Fulfilled Rate</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="deStatAvgTemp" style="color: var(--warning-yellow);">0°C</div>
-            <div class="lbl">Fleet Avg Temp</div>
-            <div class="sub-info" id="deStatTempBreachSub" style="color: var(--primary-red);">0 Critical Breaches</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="deStatValidRatio" style="color: #0284c7;">0%</div>
-            <div class="lbl">Validation Rate</div>
-            <div class="sub-info">Col P vs Col Q</div>
-          </div>
+          <span id="lastUpdatedTag">Syncing Google Sheets...</span>
         </div>
 
         <div class="action-bar">
-          <div class="filter-group">
-            <label>📅 Date:</label>
-            <select id="deDateFilter" onchange="applyDataEntryFilters()">
-              <option value="ALL">All Dates</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label>🚛 Vehicle:</label>
-            <select id="deVehicleFilter" onchange="applyDataEntryFilters()">
-              <option value="ALL">All Vehicles</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label>📌 Trip NR:</label>
-            <select id="deTripFilter" onchange="applyDataEntryFilters()">
-              <option value="ALL">All Trips</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label>🌡️ Temp Status:</label>
-            <select id="deTempFilter" onchange="applyDataEntryFilters()">
-              <option value="ALL">All Temperatures</option>
-              <option value="OK">Optimal (≤ 5°C)</option>
-              <option value="WARN">Warning (5.1 - 8°C)</option>
-              <option value="CRITICAL">Critical (> 8°C)</option>
-            </select>
-          </div>
-
           <button class="btn btn-red" onclick="fetchGoogleSheetData()">🔄 Live Sync</button>
-          <button class="btn btn-green" onclick="exportFilteredDataEntryExcel()">📊 Export Excel</button>
-          <button class="btn btn-auto" onclick="exportFilteredDataEntryCSV()">📥 Export CSV</button>
-
-          <input type="text" id="deSearchInput" placeholder="🔍 Search Store, Driver, Barcode..." onkeyup="applyDataEntryFilters()" style="margin-left: auto; width: 220px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
-        </div>
-
-        <div class="analytics-grid" id="deAnalyticsGrid">
-          <div class="analytics-card">
-            <h3>
-              <span>📍 Top Stores Volume (Col D & Q)</span>
-              <small style="color: var(--text-muted);" id="deStoreCountLbl">0 Stores</small>
-            </h3>
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th>Store Name</th>
-                  <th>Dispatched Qty</th>
-                  <th>Share Ratio</th>
-                </tr>
-              </thead>
-              <tbody id="deStoreTableBody"></tbody>
-            </table>
-          </div>
-
-          <div class="analytics-card">
-            <h3>
-              <span>🚚 Driver Fleet Metrics</span>
-              <small style="color: var(--text-muted);" id="deDriverCountLbl">0 Drivers</small>
-            </h3>
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th>Driver / Vehicle</th>
-                  <th>Stores</th>
-                  <th>Pallets / Totes</th>
-                  <th>Qty Dispatched</th>
-                  <th>Inspect</th>
-                </tr>
-              </thead>
-              <tbody id="deDriverTableBody"></tbody>
-            </table>
-          </div>
-
-          <div class="analytics-card">
-            <h3>
-              <span>❄️ Temperature Compliance (Col M)</span>
-              <small style="color: var(--text-muted);" id="deTempCountLbl">0 Audited</small>
-            </h3>
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th>Compliance Zone</th>
-                  <th>Trips</th>
-                  <th>Breach Share</th>
-                </tr>
-              </thead>
-              <tbody id="deTempTableBody"></tbody>
-            </table>
-          </div>
+          <input type="text" id="deSearchInput" placeholder="🔍 Search Store, Driver..." onkeyup="applyDataEntryFilters()" style="margin-left: auto;">
         </div>
 
         <div class="table-card">
@@ -596,27 +313,17 @@ TGI83K1H6MMBEG</textarea>
                   <th>TRIP ID (B)</th>
                   <th>DS CODE (C)</th>
                   <th>STORE NAME (D)</th>
-                  <th>CLUSTER (E)</th>
                   <th>STATUS (F)</th>
-                  <th>SHIFT (G)</th>
-                  <th>TASK / TRIP NR (H)</th>
                   <th>VEHICLE NO (I)</th>
                   <th>DA NAME (J)</th>
-                  <th>DISPATCHER (K)</th>
-                  <th>DOCK NO (L)</th>
                   <th>TEMP (°C) (M)</th>
-                  <th>Gate Passes (N)</th>
                   <th>PHYSICAL TOTES (O)</th>
-                  <th>Validation (P)</th>
                   <th>QTY DISPATCHED (Q)</th>
                   <th>PALLET BARCODES (R)</th>
-                  <th>NOT DISPATCH (S)</th>
-                  <th>KM (WH→Store) (T)</th>
-                  <th>TRAVEL TIME (U)</th>
                 </tr>
               </thead>
               <tbody id="deTableBody">
-                <tr><td colspan="21" class="empty-msg">Fetching Google Sheets live data...</td></tr>
+                <tr><td colspan="11" class="empty-msg">Fetching Google Sheets live data...</td></tr>
               </tbody>
             </table>
           </div>
@@ -624,83 +331,33 @@ TGI83K1H6MMBEG</textarea>
       </div>
     </div>
 
-    <!-- VIEW 4: ADMIN SYSTEM OPERATIONS CONTROL TAB -->
+    <!-- VIEW 4: ADMIN CONTROL TAB -->
     <div id="adminTabView" class="tab-view">
       <div class="page-container">
-        <div>
-          <h1 class="page-title">👑 Master Admin Control Center & Access Dispatcher</h1>
-          <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Manage Granular Tab Permissions, User Credentials Dispatch & Handle Forgot Password Requests</div>
-        </div>
+        <h1 class="page-title">👑 Master Admin Control Center</h1>
 
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="val" id="adminStatUserCount">0</div>
-            <div class="lbl">Registered Accounts</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="adminStatActiveAdmins" style="color: var(--warning-yellow);">0</div>
-            <div class="lbl">Admin Access Granted</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="adminStatActiveSessions" style="color: var(--blue-accent);">0</div>
-            <div class="lbl">Active Users Online</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="adminStatSheetStatus" style="color: var(--green-accent);">ONLINE</div>
-            <div class="lbl">Google Sync Status</div>
-          </div>
-        </div>
-
-        <div class="table-card" style="border: 2px solid #fde68a;">
-          <div style="padding:14px 18px; font-weight:800; font-size:13px; background:#fffbeb; color:#92400e; border-bottom:1px solid #fde68a; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
-            <span>⚠️ Pending Password Reset Requests Queue</span>
-            <button class="btn btn-dark" style="padding: 4px 10px; font-size:11px;" onclick="renderResetRequestsTable()">🔄 Refresh Queue</button>
+        <!-- PENDING APPROVALS QUEUE -->
+        <div class="table-card" style="border: 2px solid #38bdf8; margin-bottom: 20px;">
+          <div style="padding:14px 18px; font-weight:800; font-size:13px; background:#0f172a; color:#38bdf8; border-bottom:1px solid var(--border-color); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+            <span>⏳ Pending Registration Requests Queue</span>
+            <button class="btn btn-dark" style="padding: 4px 10px; font-size:11px;" onclick="renderPendingUsersTable()">🔄 Refresh Queue</button>
           </div>
           <div class="table-container">
             <table class="main-table">
               <thead>
                 <tr>
-                  <th>Requested Email</th>
-                  <th>Request Time</th>
-                  <th>Action</th>
+                  <th>Applicant Name</th>
+                  <th>Email Address</th>
+                  <th>Requested Passcode</th>
+                  <th>Action Approval</th>
                 </tr>
               </thead>
-              <tbody id="resetRequestsTableBody"></tbody>
+              <tbody id="pendingUsersTableBody"></tbody>
             </table>
           </div>
         </div>
 
         <div class="analytics-grid">
-          <div class="admin-form-box">
-            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">➕ Add User, Assign Tab Access & Dispatch Credentials</h3>
-            <div class="form-group">
-              <label>User Email Address</label>
-              <input type="email" id="newAdminEmail" placeholder="e.g. driver@noon.com">
-            </div>
-            <div class="form-group">
-              <label>Custom Passcode</label>
-              <input type="text" id="newAdminPasscode" placeholder="e.g. Pass123">
-            </div>
-            <div class="form-group">
-              <label>Access Role Level</label>
-              <select id="newAdminRole">
-                <option value="USER">User (Standard Access)</option>
-                <option value="ADMIN">Admin (Full System Control)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Allowed Tabs Permissions</label>
-              <div class="checkbox-group">
-                <label><input type="checkbox" id="accessBarcode" checked> Pallet Barcode Studio</label>
-                <label><input type="checkbox" id="accessPace" checked> Pace Picking Uploader</label>
-                <label><input type="checkbox" id="accessTrips" checked> Trips Viewer</label>
-              </div>
-            </div>
-
-            <button class="btn btn-green" onclick="registerUserByAdmin()">💾 Save & Dispatch Email Credentials</button>
-          </div>
-
           <div class="admin-form-box">
             <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">⚙️ System Parameter Settings</h3>
             <div class="form-group">
@@ -715,34 +372,10 @@ TGI83K1H6MMBEG</textarea>
           </div>
         </div>
 
-        <div class="table-card">
-          <div style="padding:14px 18px; font-weight:800; font-size:13px; border-bottom:1px solid var(--border-color); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
-            <span>📡 Live Active Sessions Telemetry</span>
-            <button class="btn btn-dark" style="padding: 4px 10px; font-size:11px;" onclick="renderAdminTelemetryTable()">🔄 Refresh Telemetry</button>
-          </div>
-          <div class="table-container">
-            <table class="main-table">
-              <thead>
-                <tr>
-                  <th>Logged User Email</th>
-                  <th>Session Status</th>
-                  <th>Device Type</th>
-                  <th>Hardware / Model</th>
-                  <th>Browser Engine</th>
-                  <th>Screen & Orientation</th>
-                  <th>Last Active</th>
-                  <th>Access Role</th>
-                  <th>Force Action</th>
-                </tr>
-              </thead>
-              <tbody id="adminTelemetryTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="table-card">
+        <!-- AUTHORIZED USERS -->
+        <div class="table-card" style="margin-top:20px;">
           <div style="padding:14px 18px; font-weight:800; font-size:13px; border-bottom:1px solid var(--border-color); text-transform:uppercase;">
-            👥 Authorized Users Database Access & Control
+            👥 Approved Users Database Access & Control
           </div>
           <div class="table-container">
             <table class="main-table">
@@ -751,7 +384,6 @@ TGI83K1H6MMBEG</textarea>
                   <th>User Email</th>
                   <th>Personal Passcode</th>
                   <th>Role Level</th>
-                  <th>Allowed Tabs Permissions</th>
                   <th>Status State</th>
                   <th>Toggle Access</th>
                   <th>Revoke Account</th>
