@@ -530,7 +530,7 @@ body {
 .analytics-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; }
 
 .mini-table, table.main-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.mini-table th, .mini-table td, table.main-table th, table.main-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
+.mini-table th, .mini-table td, table.main-table th, table.main-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); white-space: nowrap; }
 .mini-table th, table.main-table th { background-color: var(--table-header-bg); color: var(--text-muted); font-weight: 700; font-size: 11px; }
 
 .progress-bar-bg { background: var(--border-color); height: 6px; border-radius: 3px; overflow: hidden; width: 70px; }
