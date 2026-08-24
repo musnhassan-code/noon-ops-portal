@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>noon MINUTES OPS | Middle Mile Command Center</title>
-  
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -370,7 +368,6 @@
           <input type="text" id="deSearchInput" placeholder="🔍 Search Store, Driver, Barcode..." onkeyup="applyDataEntryFilters()" style="margin-left: auto; width: 220px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
         </div>
 
-        <!-- RESTORED THREE ANALYTICS CARDS -->
         <div class="analytics-grid" id="deAnalyticsGrid">
           <div class="analytics-card">
             <h3>
@@ -499,26 +496,6 @@
         </div>
 
         <div class="analytics-grid">
-          <div class="admin-form-box">
-            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">➕ Direct Add User</h3>
-            <div class="form-group">
-              <label>User Email Address</label>
-              <input type="email" id="newAdminEmail" placeholder="e.g. driver@noon.com">
-            </div>
-            <div class="form-group">
-              <label>Custom Passcode</label>
-              <input type="text" id="newAdminPasscode" placeholder="e.g. Pass123">
-            </div>
-            <div class="form-group">
-              <label>Access Role Level</label>
-              <select id="newAdminRole">
-                <option value="USER">User (Standard Access)</option>
-                <option value="ADMIN">Admin (Full System Control)</option>
-              </select>
-            </div>
-            <button class="btn btn-green" onclick="registerUserByAdmin()">💾 Save User Credentials</button>
-          </div>
-
           <div class="admin-form-box">
             <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">⚙️ System Parameter Settings</h3>
             <div class="form-group">
