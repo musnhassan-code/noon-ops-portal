@@ -525,7 +525,7 @@ body {
 .btn-dark { background-color: #1e293b; color: #ffffff; }
 .btn-green { background-color: #16a34a; color: #ffffff; }
 
-.analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
 .analytics-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
 
 .table-scroll-container { max-height: 280px; overflow-y: auto; }
