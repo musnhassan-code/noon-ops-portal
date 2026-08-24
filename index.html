@@ -50,7 +50,7 @@
         <span class="noon-txt">noon</span>
         <span class="ops-badge">MIDDLE MILE</span>
       </div>
-      <p class="auth-sub">Middle Mile Fleet & Dispatch Command Portal</p>
+      <p class="auth-sub">Middle Mile Fleet & Attendance Command Portal</p>
       
       <div class="input-field-group">
         <label>Corporate Work Email</label>
@@ -62,7 +62,7 @@
         <input type="password" id="authPasscodeInput" placeholder="••••••••" maxlength="30" onkeypress="handleAuthKey(event)">
       </div>
 
-      <button class="btn-login-submit" onclick="validateLogin()">Access Middle Mile Portal ➔</button>
+      <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
       
       <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Passcode?</div>
       <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
@@ -95,7 +95,7 @@
       
       <div class="trip-modal-header">
         <div class="trip-title-wrap">
-          <span class="trip-breadcrumb">Middle Mile Historical ❯ <strong id="mTripIdHeader">-</strong></span>
+          <span class="trip-breadcrumb">Dispatch Historical ❯ <strong id="mTripIdHeader">-</strong></span>
           <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
             <h2 id="mTripIdTitle">-</h2>
             <span class="badge-status" style="background:#dcfce7; color:#166534;">Dispatched Live</span>
@@ -124,7 +124,7 @@
 
       <div class="trip-body-grid">
         <div class="timeline-card">
-          <div class="card-sec-title">📍 Driver Middle Mile Route & Timeline</div>
+          <div class="card-sec-title">📍 Live Driver Route Map & Timeline</div>
           
           <div class="map-visual-box" id="mapVisualBox">
             <div class="map-path-line"></div>
@@ -157,7 +157,7 @@
 
     <div class="nav-tabs" id="navbarTabs">
       <button class="nav-tab-btn active" id="btnTabAttendance" onclick="switchMainTab('attendanceView')">🚚 Fleet Attendance</button>
-      <button class="nav-tab-btn" id="btnTabTrips" onclick="switchMainTab('dataEntryView')">🗂️ Middle Mile Command Center</button>
+      <button class="nav-tab-btn" id="btnTabTrips" onclick="switchMainTab('dataEntryView')">🗂️ Trips Command Center</button>
       <button class="nav-tab-btn" id="btnTabAdmin" onclick="switchMainTab('adminTabView')" style="display:none; color:#f59e0b;">👑 Admin Control</button>
     </div>
 
@@ -175,118 +175,82 @@
 
   <div class="main-view-content">
     
-    <!-- VIEW 1: FLEET DAILY ATTENDANCE LOG & HISTORICAL REGISTER -->
+    <!-- VIEW 1: FLEET REGISTER & ATTENDANCE -->
     <div id="attendanceView" class="tab-view active">
       <div class="page-container">
-        <div>
-          <h1 class="page-title">🚚 Fleet Daily Attendance & Loading Log</h1>
-          <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Record daily vehicle attendance, loading status, and track historical attendance records.</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h1 class="page-title">🚚 Fleet Register & Attendance Monitor</h1>
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Live sync with <strong>🚛 FLEET REGISTER & ATT</strong> sheet tab.</div>
+          </div>
+          <span id="attLastUpdatedTag" style="font-size:12px; font-weight:700; color:var(--text-muted); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);">Syncing Attendance Sheet...</span>
         </div>
 
         <!-- ATTENDANCE STATS CARDS -->
         <div class="stats-row">
           <div class="stat-card">
+            <div class="val" id="attStatTotalVehicles">0</div>
+            <div class="lbl">Registered Vehicles</div>
+          </div>
+          <div class="stat-card">
             <div class="val" id="attStatPresent" style="color: var(--green-accent);">0</div>
-            <div class="lbl">Present & Loaded Today</div>
+            <div class="lbl">Present Count</div>
           </div>
           <div class="stat-card">
             <div class="val" id="attStatAbsent" style="color: var(--primary-red);">0</div>
-            <div class="lbl">Absent / Off</div>
+            <div class="lbl">Absent Count</div>
           </div>
           <div class="stat-card">
-            <div class="val" id="attStatStandby" style="color: var(--warning-yellow);">0</div>
-            <div class="lbl">Standby / Maintenance</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="attStatRate" style="color: var(--blue-accent);">0%</div>
-            <div class="lbl">Attendance Rate</div>
+            <div class="val" id="attStatTrips" style="color: var(--blue-accent);">0</div>
+            <div class="lbl">Total Trips Executed</div>
           </div>
         </div>
 
-        <div class="analytics-grid">
-          <!-- RECORD NEW ATTENDANCE FORM -->
-          <div class="admin-form-box">
-            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">📝 Mark Daily Vehicle Attendance</h3>
-            
-            <div class="form-group">
-              <label>Attendance Date</label>
-              <input type="date" id="attInputDate">
-            </div>
-
-            <div class="form-group">
-              <label>Vehicle Number (Plate Code)</label>
-              <input type="text" id="attInputVehicle" placeholder="e.g. 1234 - A B C / Truck 05">
-            </div>
-
-            <div class="form-group">
-              <label>Driver / DA Name</label>
-              <input type="text" id="attInputDriver" placeholder="e.g. Ibrahim Ali">
-            </div>
-
-            <div class="form-group">
-              <label>Attendance Status</label>
-              <select id="attInputStatus">
-                <option value="PRESENT">✅ Present & Loaded</option>
-                <option value="ABSENT">❌ Absent / No Show</option>
-                <option value="MAINTENANCE">🔧 Under Maintenance</option>
-                <option value="STANDBY">⏸️ Standby Reserve</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Remarks / Operations Notes</label>
-              <input type="text" id="attInputNotes" placeholder="Optional notes (e.g. Loaded 2 Totes, Shift 1)">
-            </div>
-
-            <button class="btn btn-green" onclick="saveAttendanceEntry()">💾 Save Attendance Record</button>
+        <!-- FILTERS BAR -->
+        <div class="action-bar">
+          <div class="filter-group">
+            <label>📅 From Date:</label>
+            <input type="date" id="attFilterFrom" onchange="applyAttendanceFilters()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
           </div>
 
-          <!-- HISTORICAL FILTERS & EXPORT -->
-          <div class="admin-form-box">
-            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">🔍 Historical Attendance Search & Filter</h3>
-            
-            <div class="form-group">
-              <label>From Date</label>
-              <input type="date" id="attFilterFrom" onchange="filterAttendanceHistory()">
-            </div>
-
-            <div class="form-group">
-              <label>To Date</label>
-              <input type="date" id="attFilterTo" onchange="filterAttendanceHistory()">
-            </div>
-
-            <div class="form-group">
-              <label>Filter by Vehicle / Driver</label>
-              <input type="text" id="attFilterSearch" placeholder="Search vehicle no or driver name..." onkeyup="filterAttendanceHistory()">
-            </div>
-
-            <div style="display:flex; gap:10px; margin-top:10px;">
-              <button class="btn btn-dark" style="flex:1;" onclick="resetAttendanceFilters()">🔄 Reset Filters</button>
-              <button class="btn btn-red" style="flex:1;" onclick="exportAttendanceExcel()">📊 Export Excel</button>
-            </div>
+          <div class="filter-group">
+            <label>📅 To Date:</label>
+            <input type="date" id="attFilterTo" onchange="applyAttendanceFilters()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
           </div>
+
+          <div class="filter-group">
+            <label>🚦 Status:</label>
+            <select id="attFilterStatus" onchange="applyAttendanceFilters()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+              <option value="ALL">All Statuses</option>
+              <option value="Present">Present Only</option>
+              <option value="Absent">Absent Only</option>
+            </select>
+          </div>
+
+          <button class="btn btn-red" onclick="fetchAttendanceSheetData()">🔄 Live Sync Attendance</button>
+          <button class="btn btn-green" onclick="exportAttendanceExcel()">📊 Export Excel</button>
+
+          <input type="text" id="attSearchInput" placeholder="🔍 Search Vehicle Plate, Entity..." onkeyup="applyAttendanceFilters()" style="margin-left: auto; width: 240px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
         </div>
 
-        <!-- ATTENDANCE HISTORICAL REGISTER TABLE -->
+        <!-- ATTENDANCE TABLE -->
         <div class="table-card">
-          <div style="padding:14px 18px; font-weight:800; font-size:13px; border-bottom:1px solid var(--border-color); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
-            <span>📜 Historical Vehicle Attendance Log</span>
-            <span id="attLogCount" class="badge-wh">0 Records</span>
-          </div>
           <div class="table-container">
-            <table class="main-table">
-              <thead>
+            <table class="main-table" id="attendanceMainTable">
+              <thead id="attTableHead">
                 <tr>
-                  <th>Date</th>
-                  <th>Vehicle Number</th>
-                  <th>Driver Name</th>
-                  <th>Attendance Status</th>
-                  <th>Notes / Shift Details</th>
-                  <th>Action</th>
+                  <th>HUB</th>
+                  <th>Entity</th>
+                  <th>Vehicle Plate Number</th>
+                  <th>Vehicle Type</th>
+                  <th>Status</th>
+                  <th>Date Log</th>
+                  <th>Attendance</th>
+                  <th>Trips</th>
                 </tr>
               </thead>
-              <tbody id="attHistoryTableBody">
-                <tr><td colspan="6" class="empty-msg">No attendance records logged yet. Use the form above to record vehicle attendance.</td></tr>
+              <tbody id="attTableBody">
+                <tr><td colspan="8" class="empty-msg">Fetching Fleet Register & Attendance data...</td></tr>
               </tbody>
             </table>
           </div>
@@ -300,8 +264,8 @@
       <div class="page-container">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <h1 class="page-title">Middle Mile Operations Command Center</h1>
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Real-time Middle Mile Fleet Metrics & Google Sheets Analytics</div>
+            <h1 class="page-title">Dispatch Operations Command Center</h1>
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Real-time Fleet Metrics & Multi-dimensional Google Sheets Analytics</div>
           </div>
           <span id="lastUpdatedTag" style="font-size:12px; font-weight:700; color:var(--text-muted); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);">Syncing with Google Sheets...</span>
         </div>
