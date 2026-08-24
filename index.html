@@ -370,6 +370,7 @@
           <input type="text" id="deSearchInput" placeholder="🔍 Search Store, Driver, Barcode..." onkeyup="applyDataEntryFilters()" style="margin-left: auto; width: 220px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
         </div>
 
+        <!-- RESTORED THREE ANALYTICS CARDS -->
         <div class="analytics-grid" id="deAnalyticsGrid">
           <div class="analytics-card">
             <h3>
@@ -390,18 +391,16 @@
             </div>
           </div>
 
-          <!-- FIXED SCROLLABLE DRIVER FLEET METRICS CARD -->
-          <div class="analytics-card" style="grid-column: span 2;">
+          <div class="analytics-card">
             <h3>
               <span>🚚 Driver Fleet Metrics</span>
               <small style="color: var(--text-muted);" id="deDriverCountLbl">0 Drivers</small>
             </h3>
-            <div class="table-scroll-container" style="max-height: 280px; overflow-y: auto;">
+            <div class="table-scroll-container">
               <table class="mini-table">
                 <thead>
                   <tr>
-                    <th>Driver Name</th>
-                    <th>Vehicle</th>
+                    <th>Driver / Vehicle</th>
                     <th>Stores Served</th>
                     <th>Pallets / Totes</th>
                     <th>Qty Dispatched</th>
@@ -409,6 +408,25 @@
                   </tr>
                 </thead>
                 <tbody id="deDriverTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="analytics-card">
+            <h3>
+              <span>❄️ Temperature Compliance (Col M)</span>
+              <small style="color: var(--text-muted);" id="deTempCountLbl">0 Audited</small>
+            </h3>
+            <div class="table-scroll-container">
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th>Compliance Zone</th>
+                    <th>Trips</th>
+                    <th>Breach Share</th>
+                  </tr>
+                </thead>
+                <tbody id="deTempTableBody"></tbody>
               </table>
             </div>
           </div>
