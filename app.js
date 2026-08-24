@@ -12,6 +12,7 @@ let globalDataEntryRaw = [];
 let filteredDataEntry = [];
 let remoteUsersList = [];
 let dailyChartInstance = null;
+let dailyEfficiencyChartInstance = null;
 
 /* THEME MANAGEMENT */
 function initTheme() {
@@ -248,6 +249,7 @@ function switchMainTab(targetId) {
   } else if (targetId === 'dataEntryView' && !globalDataEntryRaw.length) {
     fetchGoogleSheetData();
   } else if (targetId === 'dailyReportView') {
+    populateDailySingleDateDropdown();
     renderDailyReportDashboard();
   } else if (targetId === 'adminTabView') {
     renderPendingUsersTable();
@@ -473,6 +475,7 @@ async function fetchGoogleSheetData() {
   }
 
   populateFilterDropdowns();
+  populateDailySingleDateDropdown();
   applyDataEntryFilters();
 }
 
@@ -767,7 +770,41 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
   }
 }
 
-/* DAILY REPORT PERFORMANCE DASHBOARD & CHART */
+/* DAILY REPORT DYNAMIC FILTER TOGGLE & SINGLE DATE DROPDOWN */
+function toggleDailyFilterMode() {
+  const mode = document.getElementById('rptFilterMode').value;
+  const singleGrp = document.getElementById('rptSingleGroup');
+  const rangeFromGrp = document.getElementById('rptRangeFromGroup');
+  const rangeToGrp = document.getElementById('rptRangeToGroup');
+
+  if (mode === 'SINGLE') {
+    singleGrp.style.display = 'flex';
+    rangeFromGrp.style.display = 'none';
+    rangeToGrp.style.display = 'none';
+  } else {
+    singleGrp.style.display = 'none';
+    rangeFromGrp.style.display = 'flex';
+    rangeToGrp.style.display = 'flex';
+  }
+  renderDailyReportDashboard();
+}
+
+function populateDailySingleDateDropdown() {
+  const singleSelect = document.getElementById('rptSingleDateSelect');
+  if (!singleSelect) return;
+
+  const currentVal = singleSelect.value;
+  singleSelect.innerHTML = `<option value="ALL">All Dates</option>`;
+
+  const uniqueDates = [...new Set(globalDataEntryRaw.map(r => formatExcelDate(r[0])).filter(Boolean))].sort();
+  uniqueDates.forEach(d => {
+    singleSelect.innerHTML += `<option value="${d}">${d}</option>`;
+  });
+
+  singleSelect.value = currentVal;
+}
+
+/* DAILY REPORT PERFORMANCE DASHBOARD, HEATMAP & CHARTS */
 let dailySummaryAggregated = [];
 
 function renderDailyReportDashboard() {
@@ -775,16 +812,32 @@ function renderDailyReportDashboard() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const dailyMap = {};
+  const mode = document.getElementById('rptFilterMode') ? document.getElementById('rptFilterMode').value : 'RANGE';
+  const singleDate = document.getElementById('rptSingleDateSelect') ? document.getElementById('rptSingleDateSelect').value : 'ALL';
+  const fromDate = document.getElementById('rptFilterFrom') ? document.getElementById('rptFilterFrom').value : '';
+  const toDate = document.getElementById('rptFilterTo') ? document.getElementById('rptFilterTo').value : '';
 
-  filteredDataEntry.forEach(r => {
-    const dDate = formatExcelDate(r[0]) || "Unknown Date";
+  const dailyMap = {};
+  const heatmapShiftMap = {};
+
+  globalDataEntryRaw.forEach(r => {
+    const dDate = formatExcelDate(r[0]);
+    if (!dDate) return;
+
+    if (mode === 'SINGLE') {
+      if (singleDate !== 'ALL' && dDate !== singleDate) return;
+    } else {
+      if (fromDate && dDate < fromDate) return;
+      if (toDate && dDate > toDate) return;
+    }
+
     const qty = parseCleanNumber(r[16]);
     const totes = parseCleanNumber(r[14]);
     const store = String(r[3] || "").trim();
     const driver = String(r[9] || "").trim();
     const tripId = String(r[7] || r[1] || "").trim();
-    
+    const shift = String(r[6] || "Shift 1").trim();
+
     const barcodeStr = String(r[17] || "");
     const barcodeCount = barcodeStr ? barcodeStr.split(/[,|]/).map(s=>s.trim()).filter(Boolean).length : 1;
 
@@ -806,13 +859,46 @@ function renderDailyReportDashboard() {
     if (store) dailyMap[dDate].stores.add(store);
     if (driver) dailyMap[dDate].drivers.add(driver);
     if (tripId) dailyMap[dDate].trips.add(tripId);
+
+    // Heatmap Aggregation
+    if (!heatmapShiftMap[dDate]) {
+      heatmapShiftMap[dDate] = { "Shift 1": 0, "Shift 2": 0, "Shift 3": 0 };
+    }
+    let sKey = "Shift 1";
+    if (shift.includes("2")) sKey = "Shift 2";
+    else if (shift.includes("3")) sKey = "Shift 3";
+    heatmapShiftMap[dDate][sKey] += qty;
   });
 
   const sortedDates = Object.keys(dailyMap).sort();
   dailySummaryAggregated = sortedDates.map(d => dailyMap[d]);
 
+  // UPDATE KPI TOP SUMMARY CARDS
+  let kpiQty = 0, kpiPallets = 0, kpiTotes = 0;
+  let allStoresSet = new Set(), allDriversSet = new Set(), allTripsSet = new Set();
+
+  dailySummaryAggregated.forEach(d => {
+    kpiQty += d.qty;
+    kpiPallets += d.pallets;
+    kpiTotes += d.totes;
+    d.stores.forEach(s => allStoresSet.add(s));
+    d.drivers.forEach(dr => allDriversSet.add(dr));
+    d.trips.forEach(t => allTripsSet.add(t));
+  });
+
+  if (document.getElementById('rptKpiQty')) document.getElementById('rptKpiQty').innerText = kpiQty.toLocaleString();
+  if (document.getElementById('rptKpiPallets')) document.getElementById('rptKpiPallets').innerText = kpiPallets.toLocaleString();
+  if (document.getElementById('rptKpiTotes')) document.getElementById('rptKpiTotes').innerText = kpiTotes.toLocaleString();
+  if (document.getElementById('rptKpiItemsPerTote')) document.getElementById('rptKpiItemsPerTote').innerText = kpiTotes > 0 ? (kpiQty / kpiTotes).toFixed(1) : '0.0';
+  if (document.getElementById('rptKpiItemsPerPallet')) document.getElementById('rptKpiItemsPerPallet').innerText = kpiPallets > 0 ? (kpiQty / kpiPallets).toFixed(1) : '0.0';
+  if (document.getElementById('rptKpiStores')) document.getElementById('rptKpiStores').innerText = allStoresSet.size;
+  if (document.getElementById('rptKpiDrivers')) document.getElementById('rptKpiDrivers').innerText = `${allDriversSet.size} Drivers / ${allTripsSet.size} Trips`;
+
   if (dailySummaryAggregated.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" class="empty-msg">No aggregated daily data available for selected criteria.</td></tr>`;
+    renderHeatmapMatrix({});
+    renderDailyChart([]);
+    renderDailyEfficiencyChart([]);
     return;
   }
 
@@ -835,16 +921,57 @@ function renderDailyReportDashboard() {
     tbody.appendChild(tr);
   });
 
+  renderHeatmapMatrix(heatmapShiftMap);
   renderDailyChart(dailySummaryAggregated);
+  renderDailyEfficiencyChart(dailySummaryAggregated);
+}
+
+function renderHeatmapMatrix(shiftMap) {
+  const tbody = document.getElementById('heatmapTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const dates = Object.keys(shiftMap).sort();
+  if (dates.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-msg">No heatmap matrix data available.</td></tr>`;
+    return;
+  }
+
+  dates.forEach(d => {
+    const s1 = shiftMap[d]["Shift 1"] || 0;
+    const s2 = shiftMap[d]["Shift 2"] || 0;
+    const s3 = shiftMap[d]["Shift 3"] || 0;
+    const maxVal = Math.max(s1, s2, s3, 1);
+
+    const getBg = (val) => {
+      let ratio = val / maxVal;
+      if (val === 0) return 'background:rgba(255,255,255,0.02); color:var(--text-muted);';
+      if (ratio > 0.7) return 'background:rgba(229, 46, 46, 0.25); color:#f87171; font-weight:900;';
+      if (ratio > 0.3) return 'background:rgba(245, 158, 11, 0.2); color:#fbbf24; font-weight:800;';
+      return 'background:rgba(34, 197, 94, 0.15); color:#4ade80;';
+    };
+
+    let peak = "Shift 1";
+    if (s2 > s1 && s2 >= s3) peak = "Shift 2";
+    if (s3 > s1 && s3 > s2) peak = "Shift 3";
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${d}</strong></td>
+      <td><span style="padding:4px 8px; border-radius:4px; ${getBg(s1)}">${s1.toLocaleString()} QTY</span></td>
+      <td><span style="padding:4px 8px; border-radius:4px; ${getBg(s2)}">${s2.toLocaleString()} QTY</span></td>
+      <td><span style="padding:4px 8px; border-radius:4px; ${getBg(s3)}">${s3.toLocaleString()} QTY</span></td>
+      <td><span class="badge-wh" style="background:#e0f2fe; color:#0369a1;">🔥 ${peak} Peak</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 function renderDailyChart(data) {
   const ctx = document.getElementById('dailyVolumeChart');
   if (!ctx) return;
 
-  if (dailyChartInstance) {
-    dailyChartInstance.destroy();
-  }
+  if (dailyChartInstance) dailyChartInstance.destroy();
 
   const labels = data.map(d => d.date);
   const qtyData = data.map(d => d.qty);
@@ -878,22 +1005,57 @@ function renderDailyChart(data) {
       maintainAspectRatio: false,
       scales: {
         x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: {
-          type: 'linear',
-          position: 'left',
-          ticks: { color: '#22c55e' },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        },
-        y1: {
-          type: 'linear',
-          position: 'right',
-          ticks: { color: '#a855f7' },
-          grid: { drawOnChartArea: false }
-        }
+        y: { type: 'linear', position: 'left', ticks: { color: '#22c55e' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y1: { type: 'linear', position: 'right', ticks: { color: '#a855f7' }, grid: { drawOnChartArea: false } }
       },
-      plugins: {
-        legend: { labels: { color: '#f8fafc' } }
-      }
+      plugins: { legend: { labels: { color: '#f8fafc' } } }
+    }
+  });
+}
+
+function renderDailyEfficiencyChart(data) {
+  const ctx = document.getElementById('dailyEfficiencyChart');
+  if (!ctx) return;
+
+  if (dailyEfficiencyChartInstance) dailyEfficiencyChartInstance.destroy();
+
+  const labels = data.map(d => d.date);
+  const avgToteData = data.map(d => d.totes > 0 ? (d.qty / d.totes).toFixed(1) : 0);
+  const storesData = data.map(d => d.stores.size);
+
+  dailyEfficiencyChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Avg Items / Tote',
+          data: avgToteData,
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.2)',
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Stores Served',
+          data: storesData,
+          borderColor: '#3b82f6',
+          backgroundColor: '#3b82f6',
+          type: 'bar',
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y1: { type: 'linear', position: 'right', ticks: { color: '#3b82f6' }, grid: { drawOnChartArea: false } }
+      },
+      plugins: { legend: { labels: { color: '#f8fafc' } } }
     }
   });
 }
