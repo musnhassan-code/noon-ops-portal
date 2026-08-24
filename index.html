@@ -12,7 +12,7 @@
 </head>
 <body>
 
-  <!-- AUTHENTICATION OVERLAY -->
+  <!-- AUTHENTICATION OVERLAY WITH LOGIN & REGISTRATION -->
   <div id="authOverlay">
     <div class="speed-grid-lines"></div>
 
@@ -45,7 +45,8 @@
       <div class="truck-road-line"></div>
     </div>
 
-    <div class="auth-card">
+    <!-- LOGIN CARD -->
+    <div class="auth-card" id="loginCard">
       <div class="auth-brand">
         <span class="noon-txt">noon</span>
         <span class="ops-badge">MIDDLE MILE</span>
@@ -64,8 +65,40 @@
 
       <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
       
-      <div class="forget-link" onclick="toggleForgetModal(true)">Forgot Passcode?</div>
+      <div style="display:flex; justify-content:space-between; margin-top:16px;">
+        <span class="forget-link" onclick="toggleAuthMode('register')">Create New Account</span>
+        <span class="forget-link" onclick="toggleForgetModal(true)">Forgot Passcode?</span>
+      </div>
       <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
+    </div>
+
+    <!-- REGISTER CARD -->
+    <div class="auth-card" id="registerCard" style="display:none;">
+      <div class="auth-brand">
+        <span class="noon-txt">noon</span>
+        <span class="ops-badge">REGISTER</span>
+      </div>
+      <p class="auth-sub">Request Access Credentials</p>
+      
+      <div class="input-field-group">
+        <label>Full Name</label>
+        <input type="text" id="regNameInput" placeholder="e.g. Ahmed Hassan">
+      </div>
+
+      <div class="input-field-group">
+        <label>Corporate Work Email</label>
+        <input type="email" id="regEmailInput" placeholder="name@noon.com">
+      </div>
+
+      <div class="input-field-group">
+        <label>Choose Passcode</label>
+        <input type="password" id="regPasscodeInput" placeholder="••••••••" maxlength="30">
+      </div>
+
+      <button class="btn-login-submit" style="background:var(--green-accent);" onclick="submitRegistration()">Submit Request ➔</button>
+      
+      <div class="forget-link" onclick="toggleAuthMode('login')" style="margin-top:16px;">← Back to Login Portal</div>
+      <div class="auth-error" id="regErrorMsg"></div>
     </div>
   </div>
 
@@ -157,7 +190,7 @@
 
     <div class="nav-tabs" id="navbarTabs">
       <button class="nav-tab-btn active" id="btnTabAttendance" onclick="switchMainTab('attendanceView')">🚚 Fleet Attendance</button>
-      <button class="nav-tab-btn" id="btnTabTrips" onclick="switchMainTab('dataEntryView')">🗂️ Trips Command Center</button>
+      <button class="nav-tab-btn" id="btnTabTrips" onclick="switchMainTab('dataEntryView')">🗂️ Middle Mile Command Center</button>
       <button class="nav-tab-btn" id="btnTabAdmin" onclick="switchMainTab('adminTabView')" style="display:none; color:#f59e0b;">👑 Admin Control</button>
     </div>
 
@@ -186,7 +219,6 @@
           <span id="attLastUpdatedTag" style="font-size:12px; font-weight:700; color:var(--text-muted); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);">Syncing Attendance Sheet...</span>
         </div>
 
-        <!-- ATTENDANCE STATS CARDS -->
         <div class="stats-row">
           <div class="stat-card">
             <div class="val" id="attStatTotalVehicles">0</div>
@@ -206,7 +238,6 @@
           </div>
         </div>
 
-        <!-- FILTERS BAR -->
         <div class="action-bar">
           <div class="filter-group">
             <label>📅 From Date:</label>
@@ -233,7 +264,6 @@
           <input type="text" id="attSearchInput" placeholder="🔍 Search Vehicle Plate, Entity..." onkeyup="applyAttendanceFilters()" style="margin-left: auto; width: 240px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
         </div>
 
-        <!-- ATTENDANCE TABLE -->
         <div class="table-card">
           <div class="table-container">
             <table class="main-table" id="attendanceMainTable">
@@ -336,7 +366,6 @@
           </div>
 
           <button class="btn btn-red" onclick="fetchGoogleSheetData()">🔄 Live Sync</button>
-          <button class="btn btn-green" onclick="exportFilteredDataEntryExcel()">📊 Export Excel</button>
 
           <input type="text" id="deSearchInput" placeholder="🔍 Search Store, Driver, Barcode..." onkeyup="applyDataEntryFilters()" style="margin-left: auto; width: 220px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
         </div>
@@ -347,52 +376,41 @@
               <span>📍 Top Stores Volume (Col D & Q)</span>
               <small style="color: var(--text-muted);" id="deStoreCountLbl">0 Stores</small>
             </h3>
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th>Store Name</th>
-                  <th>Dispatched Qty</th>
-                  <th>Share Ratio</th>
-                </tr>
-              </thead>
-              <tbody id="deStoreTableBody"></tbody>
-            </table>
+            <div class="table-scroll-container">
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th>Store Name</th>
+                    <th>Dispatched Qty</th>
+                    <th>Share Ratio</th>
+                  </tr>
+                </thead>
+                <tbody id="deStoreTableBody"></tbody>
+              </table>
+            </div>
           </div>
 
-          <div class="analytics-card">
+          <!-- FIXED SCROLLABLE DRIVER FLEET METRICS CARD -->
+          <div class="analytics-card" style="grid-column: span 2;">
             <h3>
               <span>🚚 Driver Fleet Metrics</span>
               <small style="color: var(--text-muted);" id="deDriverCountLbl">0 Drivers</small>
             </h3>
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th>Driver / Vehicle</th>
-                  <th>Stores</th>
-                  <th>Pallets / Totes</th>
-                  <th>Qty Dispatched</th>
-                  <th>Inspect</th>
-                </tr>
-              </thead>
-              <tbody id="deDriverTableBody"></tbody>
-            </table>
-          </div>
-
-          <div class="analytics-card">
-            <h3>
-              <span>❄️ Temperature Compliance (Col M)</span>
-              <small style="color: var(--text-muted);" id="deTempCountLbl">0 Audited</small>
-            </h3>
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th>Compliance Zone</th>
-                  <th>Trips</th>
-                  <th>Breach Share</th>
-                </tr>
-              </thead>
-              <tbody id="deTempTableBody"></tbody>
-            </table>
+            <div class="table-scroll-container" style="max-height: 280px; overflow-y: auto;">
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th>Driver Name</th>
+                    <th>Vehicle</th>
+                    <th>Stores Served</th>
+                    <th>Pallets / Totes</th>
+                    <th>Qty Dispatched</th>
+                    <th>Inspect</th>
+                  </tr>
+                </thead>
+                <tbody id="deDriverTableBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -438,27 +456,33 @@
       <div class="page-container">
         <div>
           <h1 class="page-title">👑 Master Admin Control Center</h1>
-          <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Manage Middle Mile Access Controls & System Parameters</div>
+          <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Manage Pending User Approval Requests & System Parameters</div>
         </div>
 
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="val" id="adminStatUserCount">0</div>
-            <div class="lbl">Registered Accounts</div>
+        <!-- PENDING USER APPROVAL QUEUE -->
+        <div class="table-card" style="border: 2px solid #38bdf8; margin-bottom: 20px;">
+          <div style="padding:14px 18px; font-weight:800; font-size:13px; background:#0f172a; color:#38bdf8; border-bottom:1px solid var(--border-color); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+            <span>⏳ Pending Account Registration Requests Queue</span>
+            <button class="btn btn-dark" style="padding: 4px 10px; font-size:11px;" onclick="renderPendingUsersTable()">🔄 Refresh Queue</button>
           </div>
-          <div class="stat-card">
-            <div class="val" id="adminStatActiveAdmins" style="color: var(--warning-yellow);">0</div>
-            <div class="lbl">Admin Access Granted</div>
-          </div>
-          <div class="stat-card">
-            <div class="val" id="adminStatSheetStatus" style="color: var(--green-accent);">ONLINE</div>
-            <div class="lbl">Google Sync Status</div>
+          <div class="table-container">
+            <table class="main-table">
+              <thead>
+                <tr>
+                  <th>Applicant Name</th>
+                  <th>Work Email</th>
+                  <th>Passcode</th>
+                  <th>Approval Action</th>
+                </tr>
+              </thead>
+              <tbody id="pendingUsersTableBody"></tbody>
+            </table>
           </div>
         </div>
 
         <div class="analytics-grid">
           <div class="admin-form-box">
-            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">➕ Add User Access</h3>
+            <h3 style="font-size: 13px; font-weight: 800; text-transform: uppercase;">➕ Direct Add User</h3>
             <div class="form-group">
               <label>User Email Address</label>
               <input type="email" id="newAdminEmail" placeholder="e.g. driver@noon.com">
@@ -491,9 +515,9 @@
           </div>
         </div>
 
-        <div class="table-card">
+        <div class="table-card" style="margin-top:20px;">
           <div style="padding:14px 18px; font-weight:800; font-size:13px; border-bottom:1px solid var(--border-color); text-transform:uppercase;">
-            👥 Authorized Middle Mile Users
+            👥 Authorized Active Users Database
           </div>
           <div class="table-container">
             <table class="main-table">
@@ -503,7 +527,7 @@
                   <th>Personal Passcode</th>
                   <th>Role Level</th>
                   <th>Status State</th>
-                  <th>Revoke Account</th>
+                  <th>Revoke Access</th>
                 </tr>
               </thead>
               <tbody id="adminUserTableBody"></tbody>
