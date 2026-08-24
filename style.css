@@ -278,7 +278,7 @@ body {
 .btn-login-submit { width: 100%; padding: 13px; background: var(--primary-red); color: #ffffff; border: none; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; margin-top: 8px; }
 .btn-login-submit:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
-.forget-link { font-size: 12px; color: #94a3b8; text-align: center; margin-top: 16px; cursor: pointer; }
+.forget-link { font-size: 12px; color: #94a3b8; text-align: center; cursor: pointer; }
 .forget-link:hover { color: #ffffff; text-decoration: underline; }
 
 .auth-error { font-size: 12px; color: #f87171; font-weight: 700; margin-top: 14px; display: none; text-align: center; background: rgba(229, 46, 46, 0.1); padding: 8px; border-radius: 6px; }
@@ -494,7 +494,6 @@ body {
 .page-container { padding: 24px 32px; max-width: 100%; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
 .page-title { font-size: 22px; font-weight: 800; color: var(--text-main); }
 
-/* STATS CARDS ROW GRID DISPLAY */
 .stats-row { 
   display: flex !important; 
   flex-direction: row !important; 
@@ -527,11 +526,13 @@ body {
 .btn-green { background-color: #16a34a; color: #ffffff; }
 
 .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
-.analytics-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; }
+.analytics-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.table-scroll-container { max-height: 280px; overflow-y: auto; }
 
 .mini-table, table.main-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .mini-table th, .mini-table td, table.main-table th, table.main-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); white-space: nowrap; }
-.mini-table th, table.main-table th { background-color: var(--table-header-bg); color: var(--text-muted); font-weight: 700; font-size: 11px; }
+.mini-table th, table.main-table th { background-color: var(--table-header-bg); color: var(--text-muted); font-weight: 700; font-size: 11px; position: sticky; top: 0; z-index: 5; }
 
 .progress-bar-bg { background: var(--border-color); height: 6px; border-radius: 3px; overflow: hidden; width: 70px; }
 .progress-bar-fill { background: var(--primary-red); height: 100%; }
