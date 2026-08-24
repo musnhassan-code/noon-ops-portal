@@ -265,6 +265,45 @@ let GID_ID = '1034377000';
 let globalDataEntryRaw = [];
 let filteredDataEntry = [];
 
+/* ADMIN SYSTEM PARAMETER CONFIGURATION */
+function saveSheetConfig() {
+  const sheetInput = document.getElementById('cfgSheetIdInput');
+  const gidInput = document.getElementById('cfgGidInput');
+
+  if (!sheetInput || !gidInput) return;
+
+  const newSheetId = sheetInput.value.trim();
+  const newGid = gidInput.value.trim();
+
+  if (!newSheetId || !newGid) {
+    alert("⚠️ Please fill in both Google Sheet ID and Tab GID Number!");
+    return;
+  }
+
+  localStorage.setItem('noon_ops_sheet_id', newSheetId);
+  localStorage.setItem('noon_ops_gid_id', newGid);
+
+  SHEET_ID = newSheetId;
+  GID_ID = newGid;
+
+  alert("✅ System parameters saved successfully! Re-syncing data...");
+  fetchGoogleSheetData();
+}
+
+function loadSheetConfig() {
+  const savedSheetId = localStorage.getItem('noon_ops_sheet_id');
+  const savedGid = localStorage.getItem('noon_ops_gid_id');
+
+  if (savedSheetId) SHEET_ID = savedSheetId;
+  if (savedGid) GID_ID = savedGid;
+
+  const sheetInput = document.getElementById('cfgSheetIdInput');
+  const gidInput = document.getElementById('cfgGidInput');
+
+  if (sheetInput) sheetInput.value = SHEET_ID;
+  if (gidInput) gidInput.value = GID_ID;
+}
+
 function formatExcelDate(val) {
   if (!val) return "";
   let num = Number(val);
@@ -592,7 +631,9 @@ function openTripModal(indexOrTripId) {
   const vehicleNo = baseRow[8] || "-";
   const driverName = baseRow[9] || "-";
   const tripDate = formatExcelDate(baseRow[0]) || "-";
-  const sourceWh = baseRow[2] || baseRow[1] || "CAIIDO1";
+
+  // Fixed Source Warehouse
+  const sourceWh = "CAIIDO1";
 
   document.getElementById('mTripIdHeader').innerText = tripId;
   document.getElementById('mTripIdTitle').innerText = tripId;
@@ -600,14 +641,11 @@ function openTripModal(indexOrTripId) {
   document.getElementById('mDriverName').innerText = driverName;
   document.getElementById('mCreatedDate').innerText = `${tripDate}, 01:11 AM`;
 
-  let uniqueStores = [...new Set(tripRows.map(r => String(r[3] || r[2] || "").trim()).filter(b => Boolean(b) && b !== sourceWh))];
-  
-  if (uniqueStores.length === 0) {
-    uniqueStores = ["6th of October", "Hadayek Al Ahram 2"];
-  }
+  // Dynamic Stores from Column D (STORE NAME)
+  let uniqueStores = [...new Set(tripRows.map(r => String(r[3] || "").trim()).filter(b => Boolean(b) && b !== sourceWh))];
 
-  const totalTotes = tripRows.reduce((acc, curr) => acc + parseCleanNumber(curr[14]), 0) || 10;
-  const totalQty = tripRows.reduce((acc, curr) => acc + parseCleanNumber(curr[16]), 0) || 100;
+  const totalTotes = tripRows.reduce((acc, curr) => acc + parseCleanNumber(curr[14]), 0);
+  const totalQty = tripRows.reduce((acc, curr) => acc + parseCleanNumber(curr[16]), 0);
 
   document.getElementById('mTotalPallets').innerText = `${totalTotes} Totes / Pallets`;
 
@@ -658,7 +696,7 @@ function openTripModal(indexOrTripId) {
     let totalBarcodesCount = 0;
 
     tripRows.forEach(r => {
-      const storeName = r[3] || "Core Storage Zone";
+      const storeName = r[3] || "Store";
       const rawBarcodes = String(r[17] || "").trim();
       
       if (rawBarcodes) {
@@ -678,22 +716,6 @@ function openTripModal(indexOrTripId) {
         });
       }
     });
-
-    if (totalBarcodesCount === 0) {
-      const defaultBarcodes = ["FPI8EH0H6TOJ8", "FPI8EH0HV6C0S", "PH41034440710E"];
-      totalBarcodesCount = defaultBarcodes.length;
-      defaultBarcodes.forEach(code => {
-        palletsContainer.innerHTML += `
-          <div class="pallet-item">
-            <div>
-              <div class="pallet-code">${code}</div>
-              <div class="pallet-type">Core Storage Zone</div>
-            </div>
-            <span class="badge-status">DELIVERED</span>
-          </div>
-        `;
-      });
-    }
 
     document.getElementById('mPalletCountTag').innerText = `${totalBarcodesCount} BARCODES`;
   }
@@ -785,6 +807,7 @@ function generateBatch() {
 /* INITIALIZATION ON LOAD */
 window.onload = function() {
   initTheme();
+  loadSheetConfig();
   checkAuthSession();
   generateBatch();
 };
