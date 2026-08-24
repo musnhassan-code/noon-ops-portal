@@ -242,7 +242,7 @@ let filteredAttendance = [];
 let globalDataEntryRaw = [];
 let filteredDataEntry = [];
 
-/* FLEET ATTENDANCE LIVE GOOGLE SHEET PARSER */
+/* ENHANCED FLEET ATTENDANCE LIVE GOOGLE SHEET PARSER */
 async function fetchAttendanceSheetData() {
   const updatedTag = document.getElementById('attLastUpdatedTag');
   if (updatedTag) updatedTag.innerText = "⏳ Syncing Attendance Sheet...";
@@ -316,9 +316,12 @@ function parseStandardDate(dateStr) {
   if (!dateStr) return "";
   let d = new Date(dateStr);
   if (!isNaN(d.getTime())) {
-    return d.toISOString().split('T')[0];
+    let year = d.getFullYear();
+    let month = String(d.getMonth() + 1).padStart(2, '0');
+    let day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
-  return dateStr;
+  return String(dateStr).trim();
 }
 
 function applyAttendanceFilters() {
@@ -579,6 +582,7 @@ function renderDataEntryDashboard() {
 function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
   const storeMap = {};
   const driverMap = {};
+  let okTemps = 0, warnTemps = 0, criticalTemps = 0;
 
   filteredDataEntry.forEach(r => {
     const store = String(r[3] || "Unknown").trim();
@@ -601,6 +605,13 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
     driverMap[key].qty += qty;
     driverMap[key].barcodes += barcodeCount;
     if (store) driverMap[key].stores.add(store);
+
+    const temp = parseCleanNumber(r[12]);
+    if (temp > 0) {
+      if (temp <= 5) okTemps++;
+      else if (temp <= 8) warnTemps++;
+      else criticalTemps++;
+    }
   });
 
   // RENDER ALL DRIVERS FULL LIST
@@ -615,7 +626,6 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
       driverBody.innerHTML += `
         <tr style="cursor:pointer;" onclick="openTripModal('${dData.tripId}')">
           <td><strong>${dData.driver}</strong></td>
-          <td><span class="badge-wh" style="color:var(--primary-red); font-size:10px;">${dData.veh}</span></td>
           <td><strong style="color:var(--blue-accent);">${dData.stores.size} Stores</strong></td>
           <td><strong>${dData.barcodes} Pallets</strong> / ${dData.totes} Totes</td>
           <td><strong style="color:var(--green-accent);">${dData.qty.toLocaleString()} QTY</strong></td>
@@ -642,6 +652,36 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
           <td>
             <div style="display:flex; align-items:center; gap:8px;">
               <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;"></div></div>
+              <span>${pct}%</span>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  // RENDER TEMPERATURE COMPLIANCE CARD (M)
+  const tempBody = document.getElementById('deTempTableBody');
+  if (tempBody) {
+    tempBody.innerHTML = '';
+    const totalTemps = temps.length || 1;
+    if(document.getElementById('deTempCountLbl')) document.getElementById('deTempCountLbl').innerText = `${temps.length} Audited`;
+
+    const tempCategories = [
+      { name: 'Optimal (≤ 5°C)', count: okTemps, color: 'var(--green-accent)' },
+      { name: 'Warning (5.1°C - 8°C)', count: warnTemps, color: 'var(--warning-yellow)' },
+      { name: 'Critical Breach (> 8°C)', count: criticalTemps, color: 'var(--primary-red)' }
+    ];
+
+    tempCategories.forEach(c => {
+      const pct = ((c.count / totalTemps) * 100).toFixed(1);
+      tempBody.innerHTML += `
+        <tr>
+          <td><strong style="color:${c.color};">${c.name}</strong></td>
+          <td><strong>${c.count}</strong> Trips</td>
+          <td>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%; background:${c.color};"></div></div>
               <span>${pct}%</span>
             </div>
           </td>
