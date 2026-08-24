@@ -18,11 +18,11 @@ function updateThemeButtonText(theme) {
   if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
 }
 
-/* USER DATABASE */
+/* USER DATABASE WITH REGISTRATION QUEUE */
 let defaultUsers = [
-  { email: "admin@noon.com", passcode: "admin123", role: "ADMIN", tabs: ["attendance", "trips", "admin"], status: "ACTIVE" },
-  { email: "musnhassan@noon.com", passcode: "1234", role: "USER", tabs: ["attendance", "trips"], status: "ACTIVE" },
-  { email: "user@noon.com", passcode: "1234", role: "USER", tabs: ["attendance", "trips"], status: "ACTIVE" }
+  { name: "Master Admin", email: "admin@noon.com", passcode: "admin123", role: "ADMIN", tabs: ["attendance", "trips", "admin"], status: "ACTIVE" },
+  { name: "Mustafa Hassan", email: "musnhassan@noon.com", passcode: "1234", role: "USER", tabs: ["attendance", "trips"], status: "ACTIVE" },
+  { name: "Standard User", email: "user@noon.com", passcode: "1234", role: "USER", tabs: ["attendance", "trips"], status: "ACTIVE" }
 ];
 
 function getStoredUsers() {
@@ -36,6 +36,200 @@ function getStoredUsers() {
 
 function saveStoredUsers(usersArr) {
   localStorage.setItem('noon_ops_user_db', JSON.stringify(usersArr));
+}
+
+/* AUTH UI TOGGLES & REGISTRATION */
+function toggleAuthMode(mode) {
+  const loginCard = document.getElementById('loginCard');
+  const registerCard = document.getElementById('registerCard');
+  if (mode === 'register') {
+    loginCard.style.display = 'none';
+    registerCard.style.display = 'block';
+  } else {
+    loginCard.style.display = 'block';
+    registerCard.style.display = 'none';
+  }
+}
+
+function submitRegistration() {
+  const name = document.getElementById('regNameInput').value.trim();
+  const email = document.getElementById('regEmailInput').value.trim().toLowerCase();
+  const passcode = document.getElementById('regPasscodeInput').value.trim();
+  const msgBox = document.getElementById('regErrorMsg');
+
+  if (!name || !email || !passcode) {
+    msgBox.style.display = 'block';
+    msgBox.style.background = 'rgba(229, 46, 46, 0.1)';
+    msgBox.style.color = '#f87171';
+    msgBox.innerText = '⚠️ All fields are required!';
+    return;
+  }
+
+  let users = getStoredUsers();
+  if (users.find(u => u.email === email)) {
+    msgBox.style.display = 'block';
+    msgBox.style.background = 'rgba(229, 46, 46, 0.1)';
+    msgBox.style.color = '#f87171';
+    msgBox.innerText = '⚠️ Email already registered!';
+    return;
+  }
+
+  users.push({
+    name: name,
+    email: email,
+    passcode: passcode,
+    role: "USER",
+    tabs: ["attendance", "trips"],
+    status: "PENDING"
+  });
+
+  saveStoredUsers(users);
+  msgBox.style.display = 'block';
+  msgBox.style.background = 'rgba(34, 197, 94, 0.1)';
+  msgBox.style.color = '#4ade80';
+  msgBox.innerText = '✅ Request submitted! Wait for Admin Approval.';
+
+  setTimeout(() => {
+    toggleAuthMode('login');
+  }, 2500);
+}
+
+/* AUTHENTICATION CONTROL */
+function checkAuthSession() {
+  const activeSession = sessionStorage.getItem('noon_ops_auth_user');
+  if (activeSession) {
+    const user = JSON.parse(activeSession);
+    unlockPortal(user);
+  } else {
+    const overlay = document.getElementById('authOverlay');
+    if (overlay) overlay.style.display = 'flex';
+  }
+}
+
+function handleAuthKey(e) {
+  if (e.key === 'Enter') validateLogin();
+}
+
+function validateLogin() {
+  const emailInput = document.getElementById('authEmailInput');
+  const passInput = document.getElementById('authPasscodeInput');
+  const errorMsg = document.getElementById('authErrorMsg');
+
+  if (!emailInput || !passInput) return;
+
+  const email = emailInput.value.trim().toLowerCase();
+  const passcode = passInput.value.trim();
+
+  const userDb = getStoredUsers();
+  const matchedUser = userDb.find(u => u.email.toLowerCase() === email && u.passcode === passcode);
+
+  if (matchedUser) {
+    if (matchedUser.status === "PENDING") {
+      errorMsg.innerText = "⏳ Account pending admin approval.";
+      errorMsg.style.display = 'block';
+      return;
+    }
+    sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(matchedUser));
+    unlockPortal(matchedUser);
+  } else {
+    errorMsg.innerText = "⚠️ Invalid credentials or account not found.";
+    errorMsg.style.display = 'block';
+    passInput.value = '';
+  }
+}
+
+function unlockPortal(user) {
+  const overlay = document.getElementById('authOverlay');
+  const errorMsg = document.getElementById('authErrorMsg');
+  if (overlay) overlay.style.display = 'none';
+  if (errorMsg) errorMsg.style.display = 'none';
+
+  setupUserInterface(user);
+}
+
+function setupUserInterface(user) {
+  const pEmail = document.getElementById('userPillEmail');
+  const pRole = document.getElementById('userPillRole');
+  if (pEmail) pEmail.innerText = user.email;
+  if (pRole) pRole.innerText = user.role;
+
+  buildDynamicNavTabs(user);
+
+  if (user.role === 'ADMIN') {
+    renderPendingUsersTable();
+    renderAdminUserTable();
+  }
+}
+
+/* TAB NAVIGATION SYSTEM */
+function buildDynamicNavTabs(user) {
+  const navContainer = document.getElementById('navbarTabs');
+  if (!navContainer) return;
+  navContainer.innerHTML = '';
+
+  const tabDefinitions = {
+    attendance: { id: 'btnTabAttendance', title: '🚚 Fleet Attendance', target: 'attendanceView' },
+    trips: { id: 'btnTabTrips', title: '🗂️ Middle Mile Command Center', target: 'dataEntryView' },
+    admin: { id: 'btnTabAdmin', title: '👑 Admin Control', target: 'adminTabView' }
+  };
+
+  let allowedKeys = user.tabs || ['attendance', 'trips'];
+  if (user.role === 'ADMIN' && !allowedKeys.includes('admin')) {
+    allowedKeys.push('admin');
+  }
+
+  allowedKeys.forEach((key) => {
+    if (tabDefinitions[key]) {
+      const btn = document.createElement('button');
+      btn.className = 'nav-tab-btn';
+      btn.id = tabDefinitions[key].id;
+      btn.innerText = tabDefinitions[key].title;
+      btn.setAttribute('onclick', `switchMainTab('${tabDefinitions[key].target}')`);
+      if (key === 'admin') btn.style.color = '#f59e0b';
+      navContainer.appendChild(btn);
+    }
+  });
+
+  if (allowedKeys.length > 0) {
+    switchMainTab(tabDefinitions[allowedKeys[0]].target);
+  }
+}
+
+function switchMainTab(targetId) {
+  document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+
+  const targetView = document.getElementById(targetId);
+  if (targetView) targetView.classList.add('active');
+
+  const buttons = document.querySelectorAll('.nav-tab-btn');
+  buttons.forEach(btn => {
+    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(targetId)) {
+      btn.classList.add('active');
+    }
+  });
+
+  if (targetId === 'attendanceView' && !globalAttendanceRaw.length) {
+    fetchAttendanceSheetData();
+  } else if (targetId === 'dataEntryView' && !globalDataEntryRaw.length) {
+    fetchGoogleSheetData();
+  } else if (targetId === 'adminTabView') {
+    renderPendingUsersTable();
+    renderAdminUserTable();
+  }
+}
+
+function logoutSession() {
+  sessionStorage.removeItem('noon_ops_auth_user');
+  location.reload();
+}
+
+/* SAFE NUMBER PARSER */
+function parseCleanNumber(val) {
+  if (val === null || val === undefined) return 0;
+  let cleanStr = String(val).replace(/,/g, '').replace(/[^0-9.-]/g, '').trim();
+  let num = parseFloat(cleanStr);
+  return isNaN(num) ? 0 : num;
 }
 
 /* GOOGLE SHEETS ENGINES */
@@ -76,8 +270,7 @@ async function fetchAttendanceSheetData() {
 
 function parseAttendanceMatrix(matrix) {
   globalAttendanceRaw = [];
-  const headerDatesRow = matrix[0]; // Dates row
-  const headerColsRow = matrix[1];  // Status / Number Of Trips sub-header
+  const headerDatesRow = matrix[0];
 
   for (let r = 2; r < matrix.length; r++) {
     const row = matrix[r];
@@ -194,188 +387,6 @@ function exportAttendanceExcel() {
   let wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Attendance_Filter_Result");
   XLSX.writeFile(wb, `Fleet_Attendance_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
-}
-
-/* AUTHENTICATION CONTROL */
-function checkAuthSession() {
-  const activeSession = sessionStorage.getItem('noon_ops_auth_user');
-  if (activeSession) {
-    const user = JSON.parse(activeSession);
-    unlockPortal(user);
-  } else {
-    const overlay = document.getElementById('authOverlay');
-    if (overlay) overlay.style.display = 'flex';
-  }
-}
-
-function handleAuthKey(e) {
-  if (e.key === 'Enter') validateLogin();
-}
-
-function validateLogin() {
-  const emailInput = document.getElementById('authEmailInput');
-  const passInput = document.getElementById('authPasscodeInput');
-  const errorMsg = document.getElementById('authErrorMsg');
-
-  if (!emailInput || !passInput) return;
-
-  const email = emailInput.value.trim().toLowerCase();
-  const passcode = passInput.value.trim();
-
-  if (email === "admin@noon.com" && passcode === "admin123") {
-    const adminUser = { email: "admin@noon.com", role: "ADMIN", tabs: ["attendance", "trips", "admin"], status: "ACTIVE" };
-    sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(adminUser));
-    unlockPortal(adminUser);
-    return;
-  } 
-  
-  if ((email === "musnhassan@noon.com" || email === "user@noon.com") && passcode === "1234") {
-    const stdUser = { email: email, role: "USER", tabs: ["attendance", "trips"], status: "ACTIVE" };
-    sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(stdUser));
-    unlockPortal(stdUser);
-    return;
-  }
-
-  const userDb = getStoredUsers();
-  const matchedUser = userDb.find(u => u.email.toLowerCase() === email && u.passcode === passcode && u.status === "ACTIVE");
-
-  if (matchedUser) {
-    sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(matchedUser));
-    unlockPortal(matchedUser);
-  } else {
-    if (errorMsg) errorMsg.style.display = 'block';
-    passInput.value = '';
-  }
-}
-
-function unlockPortal(user) {
-  const overlay = document.getElementById('authOverlay');
-  const errorMsg = document.getElementById('authErrorMsg');
-  if (overlay) overlay.style.display = 'none';
-  if (errorMsg) errorMsg.style.display = 'none';
-
-  setupUserInterface(user);
-}
-
-function setupUserInterface(user) {
-  const pEmail = document.getElementById('userPillEmail');
-  const pRole = document.getElementById('userPillRole');
-  if (pEmail) pEmail.innerText = user.email;
-  if (pRole) pRole.innerText = user.role;
-
-  buildDynamicNavTabs(user);
-
-  if (user.role === 'ADMIN') {
-    renderAdminUserTable();
-  }
-}
-
-/* TAB NAVIGATION SYSTEM */
-function buildDynamicNavTabs(user) {
-  const navContainer = document.getElementById('navbarTabs');
-  if (!navContainer) return;
-  navContainer.innerHTML = '';
-
-  const tabDefinitions = {
-    attendance: { id: 'btnTabAttendance', title: '🚚 Fleet Attendance', target: 'attendanceView' },
-    trips: { id: 'btnTabTrips', title: '🗂️ Middle Mile Command Center', target: 'dataEntryView' },
-    admin: { id: 'btnTabAdmin', title: '👑 Admin Control', target: 'adminTabView' }
-  };
-
-  let allowedKeys = user.tabs || ['attendance', 'trips'];
-  if (user.role === 'ADMIN' && !allowedKeys.includes('admin')) {
-    allowedKeys.push('admin');
-  }
-
-  allowedKeys.forEach((key) => {
-    if (tabDefinitions[key]) {
-      const btn = document.createElement('button');
-      btn.className = 'nav-tab-btn';
-      btn.id = tabDefinitions[key].id;
-      btn.innerText = tabDefinitions[key].title;
-      btn.setAttribute('onclick', `switchMainTab('${tabDefinitions[key].target}')`);
-      if (key === 'admin') btn.style.color = '#f59e0b';
-      navContainer.appendChild(btn);
-    }
-  });
-
-  if (allowedKeys.length > 0) {
-    switchMainTab(tabDefinitions[allowedKeys[0]].target);
-  }
-}
-
-function switchMainTab(targetId) {
-  document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
-
-  const targetView = document.getElementById(targetId);
-  if (targetView) targetView.classList.add('active');
-
-  const buttons = document.querySelectorAll('.nav-tab-btn');
-  buttons.forEach(btn => {
-    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(targetId)) {
-      btn.classList.add('active');
-    }
-  });
-
-  if (targetId === 'attendanceView' && !globalAttendanceRaw.length) {
-    fetchAttendanceSheetData();
-  } else if (targetId === 'dataEntryView' && !globalDataEntryRaw.length) {
-    fetchGoogleSheetData();
-  } else if (targetId === 'adminTabView') {
-    renderAdminUserTable();
-  }
-}
-
-function logoutSession() {
-  sessionStorage.removeItem('noon_ops_auth_user');
-  location.reload();
-}
-
-/* SAFE NUMBER PARSER */
-function parseCleanNumber(val) {
-  if (val === null || val === undefined) return 0;
-  let cleanStr = String(val).replace(/,/g, '').replace(/[^0-9.-]/g, '').trim();
-  let num = parseFloat(cleanStr);
-  return isNaN(num) ? 0 : num;
-}
-
-function saveSheetConfig() {
-  const sheetInput = document.getElementById('cfgSheetIdInput');
-  const gidInput = document.getElementById('cfgGidInput');
-
-  if (!sheetInput || !gidInput) return;
-
-  const newSheetId = sheetInput.value.trim();
-  const newGid = gidInput.value.trim();
-
-  if (!newSheetId || !newGid) {
-    alert("⚠️ Please fill in both Google Sheet ID and Tab GID Number!");
-    return;
-  }
-
-  localStorage.setItem('noon_ops_sheet_id', newSheetId);
-  localStorage.setItem('noon_ops_gid_id', newGid);
-
-  SHEET_ID = newSheetId;
-  GID_TRIPS = newGid;
-
-  alert("✅ System parameters saved successfully! Re-syncing data...");
-  fetchGoogleSheetData();
-}
-
-function loadSheetConfig() {
-  const savedSheetId = localStorage.getItem('noon_ops_sheet_id');
-  const savedGid = localStorage.getItem('noon_ops_gid_id');
-
-  if (savedSheetId) SHEET_ID = savedSheetId;
-  if (savedGid) GID_TRIPS = savedGid;
-
-  const sheetInput = document.getElementById('cfgSheetIdInput');
-  const gidInput = document.getElementById('cfgGidInput');
-
-  if (sheetInput) sheetInput.value = SHEET_ID;
-  if (gidInput) gidInput.value = GID_TRIPS;
 }
 
 function formatExcelDate(val) {
@@ -568,7 +579,6 @@ function renderDataEntryDashboard() {
 function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
   const storeMap = {};
   const driverMap = {};
-  let okTemps = 0, warnTemps = 0, criticalTemps = 0;
 
   filteredDataEntry.forEach(r => {
     const store = String(r[3] || "Unknown").trim();
@@ -591,50 +601,21 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
     driverMap[key].qty += qty;
     driverMap[key].barcodes += barcodeCount;
     if (store) driverMap[key].stores.add(store);
-
-    const temp = parseCleanNumber(r[12]);
-    if (temp > 0) {
-      if (temp <= 5) okTemps++;
-      else if (temp <= 8) warnTemps++;
-      else criticalTemps++;
-    }
   });
 
-  const storeBody = document.getElementById('deStoreTableBody');
-  if (storeBody) {
-    storeBody.innerHTML = '';
-    const sortedStores = Object.keys(storeMap).sort((a,b) => storeMap[b] - storeMap[a]);
-    if(document.getElementById('deStoreCountLbl')) document.getElementById('deStoreCountLbl').innerText = `${sortedStores.length} Stores`;
-
-    sortedStores.slice(0, 5).forEach(st => {
-      const val = storeMap[st];
-      const pct = totalDispatchedQty > 0 ? ((val / totalDispatchedQty) * 100).toFixed(1) : 0;
-      storeBody.innerHTML += `
-        <tr>
-          <td><strong>${st}</strong></td>
-          <td><strong>${val.toLocaleString()}</strong> QTY</td>
-          <td>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;"></div></div>
-              <span>${pct}%</span>
-            </div>
-          </td>
-        </tr>
-      `;
-    });
-  }
-
+  // RENDER ALL DRIVERS FULL LIST
   const driverBody = document.getElementById('deDriverTableBody');
   if (driverBody) {
     driverBody.innerHTML = '';
-    const sortedDrivers = Object.keys(driverMap).sort((a,b) => driverMap[b].totes - driverMap[a].totes);
+    const sortedDrivers = Object.keys(driverMap).sort((a,b) => driverMap[b].qty - driverMap[a].qty);
     if(document.getElementById('deDriverCountLbl')) document.getElementById('deDriverCountLbl').innerText = `${sortedDrivers.length} Drivers`;
 
-    sortedDrivers.slice(0, 5).forEach((dKey) => {
+    sortedDrivers.forEach((dKey) => {
       const dData = driverMap[dKey];
       driverBody.innerHTML += `
         <tr style="cursor:pointer;" onclick="openTripModal('${dData.tripId}')">
-          <td><strong>${dData.driver}</strong><br><span class="badge-wh" style="color:var(--primary-red); font-size:10px;">${dData.veh}</span></td>
+          <td><strong>${dData.driver}</strong></td>
+          <td><span class="badge-wh" style="color:var(--primary-red); font-size:10px;">${dData.veh}</span></td>
           <td><strong style="color:var(--blue-accent);">${dData.stores.size} Stores</strong></td>
           <td><strong>${dData.barcodes} Pallets</strong> / ${dData.totes} Totes</td>
           <td><strong style="color:var(--green-accent);">${dData.qty.toLocaleString()} QTY</strong></td>
@@ -644,27 +625,23 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
     });
   }
 
-  const tempBody = document.getElementById('deTempTableBody');
-  if (tempBody) {
-    tempBody.innerHTML = '';
-    const totalTemps = temps.length || 1;
-    if(document.getElementById('deTempCountLbl')) document.getElementById('deTempCountLbl').innerText = `${temps.length} Audited`;
+  // RENDER STORES
+  const storeBody = document.getElementById('deStoreTableBody');
+  if (storeBody) {
+    storeBody.innerHTML = '';
+    const sortedStores = Object.keys(storeMap).sort((a,b) => storeMap[b] - storeMap[a]);
+    if(document.getElementById('deStoreCountLbl')) document.getElementById('deStoreCountLbl').innerText = `${sortedStores.length} Stores`;
 
-    const tempCategories = [
-      { name: 'Optimal (≤ 5°C)', count: okTemps, color: 'var(--green-accent)' },
-      { name: 'Warning (5.1°C - 8°C)', count: warnTemps, color: 'var(--warning-yellow)' },
-      { name: 'Critical Breach (> 8°C)', count: criticalTemps, color: 'var(--primary-red)' }
-    ];
-
-    tempCategories.forEach(c => {
-      const pct = ((c.count / totalTemps) * 100).toFixed(1);
-      tempBody.innerHTML += `
+    sortedStores.forEach(st => {
+      const val = storeMap[st];
+      const pct = totalDispatchedQty > 0 ? ((val / totalDispatchedQty) * 100).toFixed(1) : 0;
+      storeBody.innerHTML += `
         <tr>
-          <td><strong style="color:${c.color};">${c.name}</strong></td>
-          <td><strong>${c.count}</strong> Trips</td>
+          <td><strong>${st}</strong></td>
+          <td><strong>${val.toLocaleString()}</strong> QTY</td>
           <td>
             <div style="display:flex; align-items:center; gap:8px;">
-              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%; background:${c.color};"></div></div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;"></div></div>
               <span>${pct}%</span>
             </div>
           </td>
@@ -795,12 +772,61 @@ function closeTripModal() {
   if (modal) modal.style.display = 'none';
 }
 
+/* ADMIN APPROVAL CONTROL ENGINE */
+function renderPendingUsersTable() {
+  const tbody = document.getElementById('pendingUsersTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const users = getStoredUsers();
+  const pendingUsers = users.filter(u => u.status === 'PENDING');
+
+  if (pendingUsers.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No pending registration requests.</td></tr>`;
+    return;
+  }
+
+  pendingUsers.forEach((u) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${u.name || "N/A"}</strong></td>
+      <td>${u.email}</td>
+      <td><code>${u.passcode}</code></td>
+      <td>
+        <button class="btn" style="background:var(--green-accent); padding:4px 10px; font-size:11px;" onclick="approveUser('${u.email}')">✅ Approve & Grant Access</button>
+        <button class="btn" style="background:var(--primary-red); padding:4px 10px; font-size:11px;" onclick="rejectUser('${u.email}')">❌ Reject</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function approveUser(email) {
+  let users = getStoredUsers();
+  const user = users.find(u => u.email === email);
+  if (user) {
+    user.status = 'ACTIVE';
+    saveStoredUsers(users);
+    alert(`✅ Account ${email} approved successfully!`);
+    renderPendingUsersTable();
+    renderAdminUserTable();
+  }
+}
+
+function rejectUser(email) {
+  let users = getStoredUsers();
+  users = users.filter(u => u.email !== email);
+  saveStoredUsers(users);
+  renderPendingUsersTable();
+  renderAdminUserTable();
+}
+
 function renderAdminUserTable() {
   const tbody = document.getElementById('adminUserTableBody');
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const users = getStoredUsers();
+  const users = getStoredUsers().filter(u => u.status === 'ACTIVE');
   users.forEach((u) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -808,7 +834,7 @@ function renderAdminUserTable() {
       <td><code>${u.passcode}</code></td>
       <td><span class="badge-wh">${u.role}</span></td>
       <td><span class="badge-status">${u.status}</span></td>
-      <td><button class="btn btn-red" style="padding:3px 8px; font-size:10px;">Revoke</button></td>
+      <td><button class="btn btn-red" style="padding:3px 8px; font-size:10px;" onclick="rejectUser('${u.email}')">Revoke Access</button></td>
     `;
     tbody.appendChild(tr);
   });
@@ -826,6 +852,7 @@ function registerUserByAdmin() {
 
   let users = getStoredUsers();
   users.push({
+    name: "Admin Added",
     email: email,
     passcode: passcode,
     role: role,
@@ -834,8 +861,46 @@ function registerUserByAdmin() {
   });
 
   saveStoredUsers(users);
-  alert(`✅ User ${email} added directly!`);
+  alert(`✅ User ${email} added!`);
   renderAdminUserTable();
+}
+
+function saveSheetConfig() {
+  const sheetInput = document.getElementById('cfgSheetIdInput');
+  const gidInput = document.getElementById('cfgGidInput');
+
+  if (!sheetInput || !gidInput) return;
+
+  const newSheetId = sheetInput.value.trim();
+  const newGid = gidInput.value.trim();
+
+  if (!newSheetId || !newGid) {
+    alert("⚠️ Please fill in both Google Sheet ID and Tab GID Number!");
+    return;
+  }
+
+  localStorage.setItem('noon_ops_sheet_id', newSheetId);
+  localStorage.setItem('noon_ops_gid_id', newGid);
+
+  SHEET_ID = newSheetId;
+  GID_TRIPS = newGid;
+
+  alert("✅ Parameters saved! Re-syncing...");
+  fetchGoogleSheetData();
+}
+
+function loadSheetConfig() {
+  const savedSheetId = localStorage.getItem('noon_ops_sheet_id');
+  const savedGid = localStorage.getItem('noon_ops_gid_id');
+
+  if (savedSheetId) SHEET_ID = savedSheetId;
+  if (savedGid) GID_TRIPS = savedGid;
+
+  const sheetInput = document.getElementById('cfgSheetIdInput');
+  const gidInput = document.getElementById('cfgGidInput');
+
+  if (sheetInput) sheetInput.value = SHEET_ID;
+  if (gidInput) gidInput.value = GID_TRIPS;
 }
 
 /* INITIALIZATION ON LOAD */
