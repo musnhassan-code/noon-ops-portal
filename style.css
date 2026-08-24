@@ -47,6 +47,23 @@ body {
   overflow-x: hidden;
 }
 
+/* CUSTOM PROFESSIONAL SCROLLBARS */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--main-bg);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
 /* AUTH OVERLAY */
 #authOverlay, #forgetModal {
   position: fixed;
@@ -518,17 +535,17 @@ body {
 .stat-card .sub-info { font-size: 10px; font-weight: 700; color: var(--text-muted); }
 
 .action-bar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.filter-group select, .action-bar input[type="text"] { padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 12px; font-weight: 600; background: var(--input-bg); color: var(--text-main); }
+.filter-group select, .action-bar input[type="text"], .filter-group input[type="date"] { padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 12px; font-weight: 600; background: var(--input-bg); color: var(--text-main); }
 
 .btn { padding: 9px 15px; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .btn-red { background-color: var(--primary-red); color: #ffffff; }
 .btn-dark { background-color: #1e293b; color: #ffffff; }
 .btn-green { background-color: #16a34a; color: #ffffff; }
 
-.analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.analytics-grid { display: flex; flex-wrap: wrap; gap: 16px; width: 100%; }
 .analytics-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
 
-.table-scroll-container { max-height: 280px; overflow-y: auto; }
+.table-scroll-container { max-height: 280px; overflow-y: auto; overflow-x: auto; }
 
 .mini-table, table.main-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .mini-table th, .mini-table td, table.main-table th, table.main-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); white-space: nowrap; }
