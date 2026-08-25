@@ -2,10 +2,10 @@
    1. ROOT VARIABLES & THEMES
    ========================================================================== */
 :root {
-  --bg-main: #0b0f19;
-  --bg-card: #151d2a;
-  --bg-input: #1e293b;
-  --border-color: #2a364f;
+  --bg-main: #060913;
+  --bg-card: #0d1322;
+  --bg-input: #172136;
+  --border-color: #1e2d42;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --primary-red: #e52e2e;
@@ -51,8 +51,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
-  background: var(--bg-card);
+  padding: 12px 24px;
+  background: #090e1a;
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
@@ -67,7 +67,7 @@ body {
 
 .noon-text {
   font-weight: 900;
-  font-size: 20px;
+  font-size: 22px;
   color: var(--warning-yellow);
 }
 
@@ -75,7 +75,7 @@ body {
   background: var(--primary-red);
   color: white;
   font-size: 10px;
-  padding: 2px 6px;
+  padding: 2px 8px;
   border-radius: 4px;
   font-weight: 800;
   letter-spacing: 0.5px;
@@ -90,7 +90,7 @@ body {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  padding: 8px 14px;
+  padding: 8px 16px;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -121,7 +121,7 @@ body {
 
 .user-pill {
   background: var(--bg-input);
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -184,7 +184,7 @@ body {
    4. LAYOUT & TAB VIEWS
    ========================================================================== */
 .main-view-content {
-  padding: 15px 20px;
+  padding: 20px 30px;
 }
 
 .tab-view {
@@ -198,11 +198,11 @@ body {
 .page-container {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 16px;
 }
 
 .page-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
 }
 
@@ -211,19 +211,19 @@ body {
    ========================================================================== */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
 }
 
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 12px;
+  padding: 14px;
 }
 
 .stat-card .val {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 900;
 }
 
@@ -250,7 +250,7 @@ body {
   gap: 10px;
   align-items: center;
   background: var(--bg-card);
-  padding: 10px;
+  padding: 12px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
 }
@@ -346,14 +346,14 @@ body {
 .analytics-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
 }
 
 .analytics-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 12px;
+  padding: 14px;
 }
 
 .analytics-card h3 {
@@ -411,7 +411,7 @@ tr:hover {
 }
 
 /* ==========================================================================
-   8. AUTHENTICATION OVERLAY & DOCKS (FULL TRANSIT CORRIDOR)
+   8. AUTHENTICATION GATE SCREEN WITH REALISTIC SIDE-PROFILE JUMBO TRUCK
    ========================================================================== */
 #authOverlay {
   position: fixed;
@@ -421,7 +421,7 @@ tr:hover {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 20px;
+  padding: 30px 40px;
   overflow: hidden;
 }
 
@@ -430,7 +430,7 @@ tr:hover {
   inset: 0;
   background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
                     linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-size: 32px 32px;
   pointer-events: none;
 }
 
@@ -438,210 +438,320 @@ tr:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 15px 25px;
+  background: #0d1526;
+  border: 1px solid #1a2744;
+  border-radius: 8px;
+  padding: 12px 20px;
   position: relative;
   z-index: 2;
+  width: 100%;
 }
 
 .transit-node {
   font-weight: 800;
-  font-size: 12px;
-  background: var(--bg-input);
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--border-color);
+  font-size: 11px;
+  background: #152238;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid #233654;
+  color: #f8fafc;
 }
 
 .transit-road-line {
   flex-grow: 1;
   height: 2px;
-  border-top: 2px dashed var(--warning-yellow);
-  margin: 0 20px;
+  border-top: 2px dashed #f59e0b;
+  margin: 0 15px;
   position: relative;
 }
 
+/* REALISTIC JUMBO TRUCK SIDE PROFILE */
 .transit-jumbo-truck {
   position: absolute;
-  top: -16px;
+  top: -20px;
   left: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  z-index: 10;
   animation: driveLinehaul 10s linear infinite;
 }
 
 .truck-container-box {
-  background: #facc15;
-  color: #0f172a;
-  font-size: 8px;
+  width: 140px;
+  height: 42px;
+  background: linear-gradient(135deg, #facc15 0%, #eab308 40%, #dc2626 40.1%, #991b1b 100%);
+  border: 1px solid #7f1d1d;
+  border-radius: 3px 0 0 2px;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.container-graphics {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1;
+}
+
+.brand-line-1 {
+  font-size: 10px;
   font-weight: 900;
-  padding: 4px 8px;
-  border-radius: 3px;
-  border: 1px solid #b45309;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+  font-style: italic;
+}
+
+.brand-line-2 {
+  font-size: 11px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+  font-style: italic;
+}
+
+.brand-logo-badge {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 3px;
+  background: #ffffff;
+  padding: 1px 4px;
+  border-radius: 2px;
+  width: fit-content;
+}
+
+.brand-logo-badge .logo-n {
+  font-weight: 900;
+  font-size: 8px;
+  color: #0f172a;
+}
+
+.brand-logo-badge .logo-m {
+  font-weight: 900;
+  font-size: 7px;
+  color: #e52e2e;
+  background: #e52e2e;
+  color: #ffffff;
+  padding: 0 2px;
+  border-radius: 1px;
 }
 
 .truck-cabin {
-  width: 14px;
-  height: 18px;
-  background: var(--primary-red);
-  border-radius: 3px 0 0 3px;
+  width: 28px;
+  height: 32px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0 6px 3px 0;
+  position: relative;
+  margin-left: 1px;
 }
 
+.cabin-window {
+  width: 14px;
+  height: 12px;
+  background: #0284c7;
+  border-radius: 0 4px 0 0;
+  position: absolute;
+  top: 4px;
+  right: 3px;
+}
+
+.cabin-headlight {
+  width: 3px;
+  height: 6px;
+  background: #fef08a;
+  box-shadow: 0 0 8px #fef08a;
+  position: absolute;
+  bottom: 4px;
+  right: 0;
+  border-radius: 1px;
+}
+
+.underglow-leds {
+  position: absolute;
+  bottom: -2px;
+  left: 10px;
+  width: 140px;
+  height: 2px;
+  background: #ef4444;
+  box-shadow: 0 0 10px 3px #ef4444;
+}
+
+.truck-wheel {
+  width: 12px;
+  height: 12px;
+  background: #0f172a;
+  border: 2px solid #64748b;
+  border-radius: 50%;
+  position: absolute;
+  bottom: -6px;
+}
+
+.wheel-back-1 { left: 15px; }
+.wheel-back-2 { left: 32px; }
+.wheel-front  { right: 6px; }
+
 @keyframes driveLinehaul {
-  0% { left: 0%; }
+  0%   { left: -10%; }
   100% { left: 95%; }
 }
 
 .auth-gate-wrapper {
-  display: grid;
-  grid-template-columns: 1fr 400px 300px;
-  gap: 20px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   position: relative;
   z-index: 2;
   margin: auto 0;
+  width: 100%;
 }
 
-.auth-left-brand-panel {
-  padding: 20px;
-}
+.auth-left-brand-panel { flex: 1; }
 
 .jumbo-brand-logo .jumbo-noon {
-  font-size: 56px;
+  font-size: 52px;
   font-weight: 900;
-  color: var(--warning-yellow);
+  color: #facc15;
 }
 
 .jumbo-brand-logo .jumbo-minutes {
-  font-size: 56px;
+  font-size: 52px;
   font-weight: 900;
-  color: var(--primary-red);
+  color: #e52e2e;
   margin-left: 10px;
 }
 
 .jumbo-tagline {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
-  letter-spacing: 1px;
-  color: var(--text-main);
-  margin-top: 10px;
+  letter-spacing: 0.5px;
+  color: #f8fafc;
+  margin-top: 8px;
 }
 
 .jumbo-sub-tag {
   font-size: 12px;
-  color: var(--text-muted);
+  color: #64748b;
   margin-top: 4px;
 }
 
+.auth-center-panel {
+  width: 380px;
+  margin-right: 20px;
+}
+
 .auth-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  background: #0d1526;
+  border: 1px solid #1a2744;
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
 }
 
 .auth-brand .noon-txt {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
-  color: var(--warning-yellow);
+  color: #facc15;
 }
 
 .auth-brand .ops-badge {
-  font-size: 10px;
+  font-size: 9px;
   margin-left: 6px;
+  background: #e52e2e;
 }
 
 .auth-sub {
   font-size: 11px;
-  color: var(--text-muted);
-  margin: 6px 0 20px 0;
+  color: #64748b;
+  margin: 4px 0 18px 0;
 }
 
 .input-field-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: 5px;
+  margin-bottom: 12px;
   text-align: left;
 }
 
 .input-field-group label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: #64748b;
+  letter-spacing: 0.5px;
 }
 
 .input-field-group input {
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  padding: 10px 12px;
+  background: #e0f2fe;
+  border: 1px solid #38bdf8;
+  color: #0f172a;
+  padding: 9px 12px;
   border-radius: 6px;
   font-size: 12px;
+  font-weight: 700;
   outline: none;
 }
 
 .btn-login-submit {
   width: 100%;
-  background: var(--primary-red);
+  background: #e52e2e;
   color: white;
   border: none;
   padding: 10px;
   border-radius: 6px;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .forget-link {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 10px;
+  color: #64748b;
   cursor: pointer;
 }
 
-.forget-link:hover {
-  color: var(--warning-yellow);
-}
+.forget-link:hover { color: #facc15; }
 
 .auth-error {
   font-size: 11px;
-  color: var(--primary-red);
+  color: #e52e2e;
   margin-top: 10px;
   display: none;
 }
 
 .auth-right-docks-panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 15px;
+  width: 260px;
+  background: #0d1526;
+  border: 1px solid #1a2744;
+  border-radius: 10px;
+  padding: 14px;
 }
 
 .sidebar-title {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  color: var(--warning-yellow);
+  color: #facc15;
   margin-bottom: 10px;
 }
 
 .docks-vertical-scroll {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 280px;
+  gap: 6px;
+  max-height: 250px;
   overflow-y: auto;
 }
 
 .dock-card {
-  background: var(--bg-input);
-  padding: 8px 12px;
+  background: #152238;
+  padding: 8px 10px;
   border-radius: 6px;
-  border: 1px solid var(--border-color);
+  border: 1px solid #233654;
 }
 
 .dock-header {
@@ -649,26 +759,26 @@ tr:hover {
   justify-content: space-between;
   align-items: center;
   font-weight: 800;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .dock-sub {
-  font-size: 10px;
-  color: var(--text-muted);
+  font-size: 9px;
+  color: #64748b;
 }
 
 .pulse-led {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
 }
 
-.pulse-led.green { background: var(--green-accent); box-shadow: 0 0 8px var(--green-accent); }
-.pulse-led.yellow { background: var(--warning-yellow); box-shadow: 0 0 8px var(--warning-yellow); }
-.pulse-led.red { background: var(--primary-red); box-shadow: 0 0 8px var(--primary-red); }
+.pulse-led.green  { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+.pulse-led.yellow { background: #facc15; box-shadow: 0 0 6px #facc15; }
+.pulse-led.red    { background: #e52e2e; box-shadow: 0 0 6px #e52e2e; }
 
 /* ==========================================================================
-   9. REALISTIC ROAD & ANIMATED JUMBO TRUCK IN TRIP MODAL
+   9. TRIP MODAL & ROUTE VISUALIZER
    ========================================================================== */
 .modal-overlay {
   position: fixed;
@@ -759,38 +869,6 @@ tr:hover {
   border-top: 2px dashed #f59e0b;
 }
 
-.jumbo-truck {
-  position: absolute;
-  left: 0;
-  display: flex;
-  align-items: center;
-  animation: driveTruck 8s linear infinite;
-  z-index: 5;
-}
-
-.truck-cabin {
-  width: 18px;
-  height: 22px;
-  background: #e52e2e;
-  border-radius: 4px 0 0 4px;
-  border: 1px solid #7f1d1d;
-}
-
-.truck-container {
-  height: 26px;
-  background: #facc15;
-  color: #0f172a;
-  font-size: 9px;
-  font-weight: 900;
-  padding: 0 8px;
-  display: flex;
-  align-items: center;
-  border-radius: 0 4px 4px 0;
-  border: 1px solid #b45309;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-
 .road-nodes-wrapper {
   display: flex;
   justify-content: space-between;
@@ -821,12 +899,6 @@ tr:hover {
   font-weight: 700;
   color: #f8fafc;
   margin-top: 4px;
-}
-
-@keyframes driveTruck {
-  0% { left: 2%; }
-  50% { left: 48%; }
-  100% { left: 90%; }
 }
 
 .timeline-list {
