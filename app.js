@@ -14,6 +14,16 @@ let remoteUsersList = [];
 let dailyChartInstance = null;
 let dailyEfficiencyChartInstance = null;
 
+/* WELCOME SPLASH DISMISSAL */
+function dismissWelcomeSplash() {
+  const splash = document.getElementById('welcomeSplash');
+  if (splash) {
+    splash.style.opacity = '0';
+    splash.style.pointerEvents = 'none';
+    setTimeout(() => { splash.style.display = 'none'; }, 400);
+  }
+}
+
 /* THEME MANAGEMENT */
 function initTheme() {
   const savedTheme = localStorage.getItem('noon_ops_theme') || 'dark';
@@ -32,6 +42,71 @@ function toggleTheme() {
 function updateThemeButtonText(theme) {
   const btn = document.getElementById('themeToggleBtn');
   if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+}
+
+/* DATE RANGE PICKER DROPDOWN LOGIC */
+function toggleDatePickerMenu(menuId) {
+  document.querySelectorAll('.date-picker-menu').forEach(m => {
+    if (m.id !== menuId) m.style.display = 'none';
+  });
+
+  const menu = document.getElementById(menuId);
+  if (menu) {
+    menu.style.display = (menu.style.display === 'flex' || menu.style.display === 'block') ? 'none' : 'flex';
+  }
+}
+
+function toggleCustomRangeInput(prefix) {
+  const box = document.getElementById(`${prefix}CustomRangeBox`);
+  if (box) {
+    box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+  }
+}
+
+function selectQuickDate(prefix, type) {
+  const label = document.getElementById(`${prefix}DateLabel`);
+  const fromInput = document.getElementById(`${prefix}FilterFrom`);
+  const toInput = document.getElementById(`${prefix}FilterTo`);
+  
+  let today = new Date();
+  let yyyy = today.getFullYear();
+  let mm = String(today.getMonth() + 1).padStart(2, '0');
+  let dd = String(today.getDate()).padStart(2, '0');
+  let todayStr = `${yyyy}-${mm}-${dd}`;
+
+  if (type === 'TODAY') {
+    if (fromInput) fromInput.value = todayStr;
+    if (toInput) toInput.value = todayStr;
+    if (label) label.innerText = "Today";
+  } else if (type === 'YESTERDAY') {
+    let yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    let yStr = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, '0')}-${String(yest.getDate()).padStart(2, '0')}`;
+    if (fromInput) fromInput.value = yStr;
+    if (toInput) toInput.value = yStr;
+    if (label) label.innerText = "Yesterday";
+  } else if (type === 'LAST7') {
+    let past = new Date();
+    past.setDate(past.getDate() - 7);
+    let pStr = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, '0')}-${String(past.getDate()).padStart(2, '0')}`;
+    if (fromInput) fromInput.value = pStr;
+    if (toInput) toInput.value = todayStr;
+    if (label) label.innerText = "Last 7 Days";
+  } else if (type === 'LAST30') {
+    let past = new Date();
+    past.setDate(past.getDate() - 30);
+    let pStr = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, '0')}-${String(past.getDate()).padStart(2, '0')}`;
+    if (fromInput) fromInput.value = pStr;
+    if (toInput) toInput.value = todayStr;
+    if (label) label.innerText = "Last 30 Days";
+  }
+
+  toggleDatePickerMenu(`${prefix}DatePickerMenu`);
+
+  if (prefix === 'att') applyAttendanceFilters();
+  else if (prefix === 'de') applyDataEntryFilters();
+  else if (prefix === 'drv') renderDriversDashboard();
+  else if (prefix === 'rpt') renderDailyReportDashboard();
 }
 
 /* FETCH USERS FROM GOOGLE SHEET */
@@ -194,7 +269,7 @@ function setupUserInterface(user) {
   }
 }
 
-/* NAVIGATION TABS */
+/* NAVIGATION TABS WITH STATE PERSISTENCE */
 function buildDynamicNavTabs(user) {
   const navContainer = document.getElementById('navbarTabs');
   if (!navContainer) return;
@@ -225,17 +300,28 @@ function buildDynamicNavTabs(user) {
     }
   });
 
-  if (allowedKeys.length > 0) {
+  const savedActiveTab = localStorage.getItem('noon_ops_active_tab');
+  if (savedActiveTab && document.getElementById(savedActiveTab)) {
+    switchMainTab(savedActiveTab);
+  } else if (allowedKeys.length > 0) {
     switchMainTab(tabDefinitions[allowedKeys[0]].target);
   }
 }
 
 function switchMainTab(targetId) {
+  const currentUser = JSON.parse(sessionStorage.getItem('noon_ops_auth_user') || '{}');
+  if (targetId === 'adminTabView' && currentUser.role !== 'ADMIN') {
+    alert("⛔ Access Restricted: Master Admin Authorization Required.");
+    return;
+  }
+
   document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
 
   const targetView = document.getElementById(targetId);
   if (targetView) targetView.classList.add('active');
+
+  localStorage.setItem('noon_ops_active_tab', targetId);
 
   const buttons = document.querySelectorAll('.nav-tab-btn');
   buttons.forEach(btn => {
@@ -251,7 +337,6 @@ function switchMainTab(targetId) {
   } else if (targetId === 'driversView') {
     renderDriversDashboard();
   } else if (targetId === 'dailyReportView') {
-    populateDailySingleDateDropdown();
     renderDailyReportDashboard();
   } else if (targetId === 'adminTabView') {
     renderPendingUsersTable();
@@ -261,6 +346,7 @@ function switchMainTab(targetId) {
 
 function logoutSession() {
   sessionStorage.removeItem('noon_ops_auth_user');
+  localStorage.removeItem('noon_ops_active_tab');
   location.reload();
 }
 
@@ -477,40 +563,32 @@ async function fetchGoogleSheetData() {
   }
 
   populateFilterDropdowns();
-  populateDailySingleDateDropdown();
   applyDataEntryFilters();
 }
 
 function populateFilterDropdowns() {
-  const dSelect = document.getElementById('deDateFilter');
   const vSelect = document.getElementById('deVehicleFilter');
   const tSelect = document.getElementById('deTripFilter');
 
-  if (!dSelect || !vSelect || !tSelect) return;
+  if (!vSelect || !tSelect) return;
 
-  const currentD = dSelect.value;
   const currentV = vSelect.value;
   const currentT = tSelect.value;
 
-  dSelect.innerHTML = `<option value="ALL">All Dates</option>`;
   vSelect.innerHTML = `<option value="ALL">All Vehicles</option>`;
   tSelect.innerHTML = `<option value="ALL">All Trips</option>`;
 
-  const uniqueDates = [...new Set(globalDataEntryRaw.map(r => formatExcelDate(r[0])).filter(Boolean))].sort();
   const uniqueVehicles = [...new Set(globalDataEntryRaw.map(r => String(r[8] || "").trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
   const uniqueTrips = [...new Set(globalDataEntryRaw.map(r => String(r[7] || "").trim()).filter(Boolean))].sort();
 
-  uniqueDates.forEach(d => { dSelect.innerHTML += `<option value="${d}">${d}</option>`; });
   uniqueVehicles.forEach(v => { vSelect.innerHTML += `<option value="${v}">${v}</option>`; });
   uniqueTrips.forEach(t => { tSelect.innerHTML += `<option value="${t}">${t}</option>`; });
 
-  dSelect.value = currentD;
   vSelect.value = currentV;
   tSelect.value = currentT;
 }
 
 function applyDataEntryFilters() {
-  const selectedDate = document.getElementById('deDateFilter') ? document.getElementById('deDateFilter').value : 'ALL';
   const fromDate = document.getElementById('deFilterFrom') ? document.getElementById('deFilterFrom').value : '';
   const toDate = document.getElementById('deFilterTo') ? document.getElementById('deFilterTo').value : '';
   const selectedVehicle = document.getElementById('deVehicleFilter') ? document.getElementById('deVehicleFilter').value : 'ALL';
@@ -524,7 +602,6 @@ function applyDataEntryFilters() {
     const vehVal  = String(row[8] || "").trim(); 
     const tempVal = parseCleanNumber(row[12]);
 
-    const matchDate = (selectedDate === "ALL" || dateVal === selectedDate);
     const matchFrom = !fromDate || dateVal >= fromDate;
     const matchTo = !toDate || dateVal <= toDate;
     const matchVehicle = (selectedVehicle === "ALL" || vehVal === selectedVehicle);
@@ -537,7 +614,7 @@ function applyDataEntryFilters() {
 
     const matchQuery = query === "" || row.some(cell => String(cell).toLowerCase().includes(query));
 
-    return matchDate && matchFrom && matchTo && matchVehicle && matchTrip && matchTemp && matchQuery;
+    return matchFrom && matchTo && matchVehicle && matchTrip && matchTemp && matchQuery;
   });
 
   renderDataEntryDashboard();
@@ -830,7 +907,6 @@ function renderDriversDashboard() {
 
   driversSummaryList = driverKeys.map(k => driverMap[k]);
 
-  // UPDATE KPI STATS
   let totalDrivers = driversSummaryList.length;
   let totalTripsCount = driversSummaryList.reduce((acc, d) => acc + d.trips.size, 0);
   let totalUnitsCount = driversSummaryList.reduce((acc, d) => acc + d.qty, 0);
@@ -895,40 +971,6 @@ function exportDriversReportExcel() {
   XLSX.writeFile(wb, `Drivers_Performance_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-/* DAILY REPORT DYNAMIC FILTER TOGGLE & SINGLE DATE DROPDOWN */
-function toggleDailyFilterMode() {
-  const mode = document.getElementById('rptFilterMode').value;
-  const singleGrp = document.getElementById('rptSingleGroup');
-  const rangeFromGrp = document.getElementById('rptRangeFromGroup');
-  const rangeToGrp = document.getElementById('rptRangeToGroup');
-
-  if (mode === 'SINGLE') {
-    singleGrp.style.display = 'flex';
-    rangeFromGrp.style.display = 'none';
-    rangeToGrp.style.display = 'none';
-  } else {
-    singleGrp.style.display = 'none';
-    rangeFromGrp.style.display = 'flex';
-    rangeToGrp.style.display = 'flex';
-  }
-  renderDailyReportDashboard();
-}
-
-function populateDailySingleDateDropdown() {
-  const singleSelect = document.getElementById('rptSingleDateSelect');
-  if (!singleSelect) return;
-
-  const currentVal = singleSelect.value;
-  singleSelect.innerHTML = `<option value="ALL">All Dates</option>`;
-
-  const uniqueDates = [...new Set(globalDataEntryRaw.map(r => formatExcelDate(r[0])).filter(Boolean))].sort();
-  uniqueDates.forEach(d => {
-    singleSelect.innerHTML += `<option value="${d}">${d}</option>`;
-  });
-
-  singleSelect.value = currentVal;
-}
-
 /* DAILY REPORT PERFORMANCE DASHBOARD, HEATMAP & CHARTS */
 let dailySummaryAggregated = [];
 
@@ -937,8 +979,6 @@ function renderDailyReportDashboard() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const mode = document.getElementById('rptFilterMode') ? document.getElementById('rptFilterMode').value : 'RANGE';
-  const singleDate = document.getElementById('rptSingleDateSelect') ? document.getElementById('rptSingleDateSelect').value : 'ALL';
   const fromDate = document.getElementById('rptFilterFrom') ? document.getElementById('rptFilterFrom').value : '';
   const toDate = document.getElementById('rptFilterTo') ? document.getElementById('rptFilterTo').value : '';
 
@@ -949,12 +989,8 @@ function renderDailyReportDashboard() {
     const dDate = formatExcelDate(r[0]);
     if (!dDate) return;
 
-    if (mode === 'SINGLE') {
-      if (singleDate !== 'ALL' && dDate !== singleDate) return;
-    } else {
-      if (fromDate && dDate < fromDate) return;
-      if (toDate && dDate > toDate) return;
-    }
+    if (fromDate && dDate < fromDate) return;
+    if (toDate && dDate > toDate) return;
 
     const qty = parseCleanNumber(r[16]);
     const totes = parseCleanNumber(r[14]);
@@ -1248,7 +1284,7 @@ function openTripModal(indexOrTripId) {
 
   const mapBox = document.getElementById('mapVisualBox');
   if (mapBox) {
-    let mapNodesHTML = `<div class="map-path-line"></div><div class="map-mini-van"><div class="mini-van-body">noon</div></div>`;
+    let mapNodesHTML = `<div class="map-path-line"></div><div class="map-mini-van"><div class="mini-van-body">NOON</div></div>`;
     mapNodesHTML += `<div class="map-node node-start"><span>${sourceWh}</span></div>`;
     
     uniqueStores.forEach((st) => {
@@ -1435,6 +1471,13 @@ function loadSheetConfig() {
   if (sheetInput) sheetInput.value = SHEET_ID;
   if (gidInput) gidInput.value = GID_TRIPS;
 }
+
+/* GLOBAL CLICK DISMISS FOR DROPDOWNS */
+window.onclick = function(e) {
+  if (!e.target.matches('.date-picker-btn') && !e.target.closest('.date-picker-dropdown')) {
+    document.querySelectorAll('.date-picker-menu').forEach(m => m.style.display = 'none');
+  }
+};
 
 /* INITIALIZATION ON LOAD */
 window.onload = function() {
