@@ -362,6 +362,7 @@ function switchMainTab(targetId) {
 function logoutSession() {
   sessionStorage.removeItem('noon_ops_auth_user');
   sessionStorage.removeItem('noon_ops_splash_seen');
+  sessionStorage.removeItem('cached_trips_data');
   localStorage.removeItem('noon_ops_active_tab');
   location.reload();
 }
@@ -373,13 +374,26 @@ function parseCleanNumber(val) {
   return isNaN(num) ? 0 : num;
 }
 
-/* FORMAT DATE WITH STRICT UTC CONVERSION TO PREVENT TIMELINE OFFSET SHIFTS */
+/* FORMAT DATE FUNCTION (STRICT TEXT & UTC FIX PREVENTING MAY 31ST SHIFT) */
 function formatExcelDate(val) {
   if (!val) return "";
-  
   let strVal = String(val).trim();
 
-  // معالجة تواريخ ISO ومنع ترحيل التاريخ لليوم السابق
+  // لو جاية في صيغة YYYY-MM-DD ترجع زي ما هي قطعياً
+  if (strVal.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return strVal;
+  }
+
+  // لو جاية بصيغة DD/MM/YYYY
+  if (strVal.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+    let parts = strVal.split('/');
+    let d = parts[0].padStart(2, '0');
+    let m = parts[1].padStart(2, '0');
+    let y = parts[2];
+    return `${y}-${m}-${d}`;
+  }
+
+  // معالجة تواريخ ISO وتثبيت التاريخ حسب التوقيت العالمي بدون تأثر بالمنطقة الزمنية
   if (strVal.includes('T')) {
     let d = new Date(strVal);
     if (!isNaN(d.getTime())) {
@@ -460,7 +474,7 @@ function parseAttendanceMatrix(matrix) {
         rawDateStr = String(headerDatesRow[c-1] || "").trim();
       }
 
-      let parsedDate = parseStandardDate(rawDateStr);
+      let parsedDate = formatExcelDate(rawDateStr);
 
       if (parsedDate && statusVal) {
         globalAttendanceRaw.push({
@@ -479,18 +493,6 @@ function parseAttendanceMatrix(matrix) {
   }
 
   applyAttendanceFilters();
-}
-
-function parseStandardDate(dateStr) {
-  if (!dateStr) return "";
-  let d = new Date(dateStr);
-  if (!isNaN(d.getTime())) {
-    let year = d.getUTCFullYear();
-    let month = String(d.getUTCMonth() + 1).padStart(2, '0');
-    let day = String(d.getUTCDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-  return String(dateStr).trim();
 }
 
 function applyAttendanceFilters() {
@@ -561,11 +563,24 @@ function exportAttendanceExcel() {
   XLSX.writeFile(wb, `Fleet_Attendance_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-/* TRIPS GOOGLE SHEET ENGINE VIA APPS SCRIPT API */
+/* TRIPS GOOGLE SHEET ENGINE (WITH SESSION CACHING & FAST LOAD) */
 async function fetchGoogleSheetData() {
   const updatedTag = document.getElementById('lastUpdatedTag');
   if (updatedTag) updatedTag.innerText = "⏳ Syncing Google Sheets API...";
 
+  // 1. استخدام التخزين المؤقت أولاً للتحميل الفوري وبدون لاج
+  const cachedData = sessionStorage.getItem('cached_trips_data');
+  if (cachedData) {
+    try {
+      globalDataEntryRaw = JSON.parse(cachedData);
+      if (updatedTag) updatedTag.innerText = `✅ Fast Loaded (${globalDataEntryRaw.length} rows)`;
+      populateFilterDropdowns();
+      bindFilterEventListeners();
+      selectQuickDate('de', 'ALL');
+    } catch(e) {}
+  }
+
+  // 2. تحديث البيانات في الخلفية
   try {
     let response = await fetch(`${APPS_SCRIPT_URL}?action=getTrips`);
     if (!response.ok) throw new Error("Connection Failure");
@@ -577,11 +592,12 @@ async function fetchGoogleSheetData() {
         r[0] = formatExcelDate(r[0]); 
         return r;
       });
+      sessionStorage.setItem('cached_trips_data', JSON.stringify(globalDataEntryRaw));
       if (updatedTag) updatedTag.innerText = `✅ Live Synced (${globalDataEntryRaw.length} rows) at ${new Date().toLocaleTimeString()}`;
     }
   } catch (err) {
     console.error("Fetch error:", err);
-    if (updatedTag) updatedTag.innerText = `⚠️ Connection Error via Apps Script API`;
+    if (updatedTag && !globalDataEntryRaw.length) updatedTag.innerText = `⚠️ Connection Error via Apps Script API`;
   }
 
   populateFilterDropdowns();
@@ -1273,7 +1289,7 @@ function exportDailyReportExcel() {
   XLSX.writeFile(wb, `Daily_Dispatch_Summary_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-/* TRIP DETAILS MODAL */
+/* TRIP DETAILS MODAL & REALISTIC ANIMATED ROUTE VISUALIZER */
 function openTripModal(indexOrTripId) {
   let tripRows = [];
   let targetTripId = "";
@@ -1302,30 +1318,46 @@ function openTripModal(indexOrTripId) {
   const vehicleNo = baseRow[8] || "-";
   const driverName = baseRow[9] || "-";
   const tripDate = formatExcelDate(baseRow[0]) || "-";
-
-  const sourceWh = "CAIIDO1";
+  const sourceWh = "CAIIDO1 (Main WH)";
 
   document.getElementById('mTripIdHeader').innerText = tripId;
   document.getElementById('mTripIdTitle').innerText = tripId;
   document.getElementById('mVehicleNo').innerText = vehicleNo;
   document.getElementById('mDriverName').innerText = driverName;
-  document.getElementById('mCreatedDate').innerText = `${tripDate}, 01:11 AM`;
+  document.getElementById('mCreatedDate').innerText = `${tripDate}, Dispatch Log`;
 
-  let uniqueStores = [...new Set(tripRows.map(r => String(r[3] || "").trim()).filter(b => Boolean(b) && b !== sourceWh))];
-
+  let uniqueStores = [...new Set(tripRows.map(r => String(r[3] || "").trim()).filter(b => Boolean(b) && !b.includes("CAIIDO")))];
   const totalTotes = tripRows.reduce((acc, curr) => acc + parseCleanNumber(curr[14]), 0);
-
   document.getElementById('mTotalPallets').innerText = `${totalTotes} Totes / Pallets`;
 
+  /* رسم خريطة طريق أسفلت واقعية بتتحرك عليها شاحنة جامبو بين الاستورات */
   const mapBox = document.getElementById('mapVisualBox');
   if (mapBox) {
-    let mapNodesHTML = `<div class="map-path-line"></div><div class="map-mini-van"><div class="mini-van-body">NOON</div></div>`;
-    mapNodesHTML += `<div class="map-node node-start"><span>${sourceWh}</span></div>`;
-    
-    uniqueStores.forEach((st) => {
-      mapNodesHTML += `<div class="map-node node-mid"><span>${st}</span></div>`;
+    let mapNodesHTML = `
+      <div class="asphalt-road">
+        <div class="road-line"></div>
+        <div class="jumbo-truck">
+          <div class="truck-cabin"></div>
+          <div class="truck-container">NOON EXPRESS</div>
+        </div>
+      </div>
+      <div class="road-nodes-wrapper">
+        <div class="map-node node-start">
+          <div class="node-icon">🏢</div>
+          <div class="node-label">${sourceWh}</div>
+        </div>
+    `;
+
+    uniqueStores.forEach((st, idx) => {
+      mapNodesHTML += `
+        <div class="map-node node-stop">
+          <div class="node-icon">🏪</div>
+          <div class="node-label">${st} (Store ${idx + 1})</div>
+        </div>
+      `;
     });
 
+    mapNodesHTML += `</div>`;
     mapBox.innerHTML = mapNodesHTML;
   }
 
@@ -1336,8 +1368,8 @@ function openTripModal(indexOrTripId) {
       <li class="tl-item active">
         <div class="tl-icon">✓</div>
         <div class="tl-content">
-          <strong>${sourceWh} (Source Warehouse)</strong>
-          <span>Departed: ${tripDate}, 02:09 AM</span>
+          <strong>${sourceWh}</strong>
+          <span>Warehouse Dispatch Clearance</span>
         </div>
       </li>
     `;
@@ -1347,8 +1379,8 @@ function openTripModal(indexOrTripId) {
         <li class="tl-item active">
           <div class="tl-icon">✓</div>
           <div class="tl-content">
-            <strong>${st} (Store ${i + 1})</strong>
-            <span>Arrived & Departed: 0${3 + i}:32 AM</span>
+            <strong>Store Stop ${i + 1}: ${st}</strong>
+            <span>Transit & Delivery Complete</span>
           </div>
         </li>
       `;
@@ -1476,7 +1508,7 @@ window.onclick = function(e) {
   }
 };
 
-/* INITIALIZATION ON LOAD WITH ALL DATES DEFAULT */
+/* INITIALIZATION ON LOAD WITH UNIFIED DEFAULT FOR ALL USERS */
 window.onload = function() {
   initTheme();
   checkWelcomeSplash();
