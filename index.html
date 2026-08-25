@@ -30,7 +30,7 @@
     </div>
   </div>
 
-  <!-- AUTHENTICATION OVERLAY WITH REALISTIC SIDE-PROFILE JUMBO TRUCK -->
+  <!-- AUTHENTICATION OVERLAY WITHOUT DOCKS -->
   <div id="authOverlay">
     <div class="speed-grid-lines"></div>
 
@@ -40,7 +40,7 @@
         <span>🏬 WH (Main Warehouse)</span>
       </div>
       <div class="transit-road-line">
-        <!-- REALISTIC SIDE-PROFILE JUMBO TRUCK -->
+        <!-- REALISTIC JUMBO TRUCK UNDERLAY PASSING UNDER LABELS -->
         <div class="transit-jumbo-truck">
           <div class="truck-container-box">
             <div class="container-graphics">
@@ -131,40 +131,6 @@
           
           <div class="forget-link" onclick="toggleAuthMode('login')" style="margin-top:16px;">← Back to Login Portal</div>
           <div class="auth-error" id="regErrorMsg"></div>
-        </div>
-      </div>
-
-      <div class="auth-right-docks-panel">
-        <div class="sidebar-title">⚡ BAY DOCKS MONITOR (07 - 13)</div>
-        <div class="docks-vertical-scroll">
-          <div class="dock-card">
-            <div class="dock-header"><span>DOCK 07</span> <span class="pulse-led green"></span></div>
-            <div class="dock-sub">Loading • TR-4821</div>
-          </div>
-          <div class="dock-card">
-            <div class="dock-header"><span>DOCK 08</span> <span class="pulse-led green"></span></div>
-            <div class="dock-sub">Loading • TR-9902</div>
-          </div>
-          <div class="dock-card">
-            <div class="dock-header"><span>DOCK 09</span> <span class="pulse-led yellow"></span></div>
-            <div class="dock-sub">Staging • TR-1044</div>
-          </div>
-          <div class="dock-card">
-            <div class="dock-header"><span>DOCK 10</span> <span class="pulse-led red"></span></div>
-            <div class="dock-sub">Maintenance</div>
-          </div>
-          <div class="dock-card">
-            <div class="dock-header"><span>DOCK 11</span> <span class="pulse-led green"></span></div>
-            <div class="dock-sub">Loading • TR-3011</div>
-          </div>
-          <div class="dock-card">
-            <div class="dock-header"><span>DOCK 12</span> <span class="pulse-led green"></span></div>
-            <div class="dock-sub">Dispatched • TR-7712</div>
-          </div>
-          <div class="dock-card">
-            <div class="dock-header"><span>DOCK 13</span> <span class="pulse-led yellow"></span></div>
-            <div class="dock-sub">Staging • TR-8813</div>
-          </div>
         </div>
       </div>
     </div>
@@ -332,8 +298,8 @@
             <label>🚦 Status:</label>
             <select id="attFilterStatus" onchange="applyAttendanceFilters()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
               <option value="ALL">All Statuses</option>
-              <option value="Present">Present Only</option>
-              <option value="Absent">Absent Only</option>
+              <option value="PRESENT">Present Only</option>
+              <option value="ABSENT">Absent Only</option>
             </select>
           </div>
 
@@ -463,7 +429,7 @@
         </div>
 
         <div class="analytics-grid" id="deAnalyticsGrid">
-          <div class="analytics-card" style="flex: 1 1 250px;">
+          <div class="analytics-card" style="flex: 1 1 280px;">
             <h3>
               <span>📍 Top Stores Volume (Col D & Q)</span>
               <small style="color: var(--text-muted);" id="deStoreCountLbl">0 Stores</small>
