@@ -30,133 +30,128 @@
     </div>
   </div>
 
-  <!-- AUTHENTICATION OVERLAY WITH DOCKS CONTROL TOWER -->
+  <!-- AUTHENTICATION OVERLAY WITH FULL TRANSIT & DOCKS -->
   <div id="authOverlay">
     <div class="speed-grid-lines"></div>
 
-    <!-- LEFT SIDE: DOCKS 07 TO 13 LIVE MONITOR -->
-    <div class="auth-docks-sidebar left-docks">
-      <div class="sidebar-title">⚡ DOCK BAY MONITOR</div>
-      <div class="dock-card">
-        <div class="dock-header"><span>DOCK 07</span> <span class="pulse-led green"></span></div>
-        <div class="dock-sub">Loading • TR-4821</div>
+    <!-- TOP FULL-WIDTH TRANSIT CORRIDOR (WH -> DS DARK STORE) -->
+    <div class="top-transit-corridor">
+      <div class="transit-node wh-node">
+        <span>🏬 WH (Main Warehouse)</span>
       </div>
-      <div class="dock-card">
-        <div class="dock-header"><span>DOCK 08</span> <span class="pulse-led green"></span></div>
-        <div class="dock-sub">Loading • TR-9902</div>
+      <div class="transit-road-line">
+        <div class="transit-moving-truck">
+          <div class="mini-van-body">NOON</div>
+        </div>
       </div>
-      <div class="dock-card">
-        <div class="dock-header"><span>DOCK 09</span> <span class="pulse-led yellow"></span></div>
-        <div class="dock-sub">Staging • TR-1044</div>
-      </div>
-      <div class="dock-card">
-        <div class="dock-header"><span>DOCK 10</span> <span class="pulse-led red"></span></div>
-        <div class="dock-sub">Maintenance</div>
+      <div class="transit-node ds-node">
+        <span>⚡ DS (Dark Store)</span>
       </div>
     </div>
 
-    <!-- CENTER LOGIN / REGISTER PANEL -->
-    <div class="auth-center-wrap">
-      <div class="jumbo-truck-container">
-        <div class="jumbo-truck">
-          <div class="truck-container-box">
-            <div class="container-graphics">
-              <div class="stripe-red"></div>
-              <div class="stripe-dark"></div>
-              <div class="text-everything">MIDDLE MILE<br>OPS PORTAL</div>
-              <div class="logo-wrap-mini">
-                <span class="logo-noon">NOON</span>
-                <span class="logo-minutes">MINUTES</span>
-              </div>
-              <div class="side-door"></div>
-            </div>
+    <!-- MAIN GATE CONTENT WRAPPER -->
+    <div class="auth-gate-wrapper">
+      <!-- LEFT SIDE: LARGE BRAND LOGO -->
+      <div class="auth-left-brand-panel">
+        <div class="jumbo-brand-logo">
+          <span class="jumbo-noon">NOON</span>
+          <span class="jumbo-minutes">MINUTES</span>
+        </div>
+        <div class="jumbo-tagline">MIDDLE MILE LINEHAUL CONTROL TOWER</div>
+        <div class="jumbo-sub-tag">Real-Time Fleet & Dispatch Management System</div>
+      </div>
+
+      <!-- CENTER: LARGER & EXPANDED LOGIN CARD -->
+      <div class="auth-center-panel">
+        <div class="auth-card expanded-card" id="loginCard">
+          <div class="auth-brand">
+            <span class="noon-txt">NOON</span>
+            <span class="ops-badge">MIDDLE MILE</span>
+          </div>
+          <p class="auth-sub">Middle Mile Fleet & Attendance Command Portal</p>
+          
+          <div class="input-field-group">
+            <label>Corporate Work Email</label>
+            <input type="email" id="authEmailInput" placeholder="name@noon.com" autocomplete="off">
           </div>
 
-          <div class="truck-cabin">
-            <div class="cabin-window"></div>
-            <div class="cabin-headlight"></div>
+          <div class="input-field-group">
+            <label>Security Passcode</label>
+            <input type="password" id="authPasscodeInput" placeholder="••••••••" maxlength="30" onkeypress="handleAuthKey(event)">
           </div>
 
-          <div class="underglow-leds"></div>
-
-          <div class="truck-wheel wheel-back-1"></div>
-          <div class="truck-wheel wheel-back-2"></div>
-          <div class="truck-wheel wheel-front"></div>
+          <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
+          
+          <div style="display:flex; justify-content:space-between; margin-top:18px;">
+            <span class="forget-link" onclick="toggleAuthMode('register')">Create New Account</span>
+            <span class="forget-link" onclick="toggleForgetModal(true)">Forgot Passcode?</span>
+          </div>
+          <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
         </div>
-        <div class="truck-road-line"></div>
+
+        <!-- REGISTER CARD -->
+        <div class="auth-card expanded-card" id="registerCard" style="display:none;">
+          <div class="auth-brand">
+            <span class="noon-txt">NOON</span>
+            <span class="ops-badge">REGISTER</span>
+          </div>
+          <p class="auth-sub">Request Access Credentials</p>
+          
+          <div class="input-field-group">
+            <label>Full Name</label>
+            <input type="text" id="regNameInput" placeholder="e.g. Ahmed Hassan">
+          </div>
+
+          <div class="input-field-group">
+            <label>Corporate Work Email</label>
+            <input type="email" id="regEmailInput" placeholder="name@noon.com">
+          </div>
+
+          <div class="input-field-group">
+            <label>Choose Passcode</label>
+            <input type="password" id="regPasscodeInput" placeholder="••••••••" maxlength="30">
+          </div>
+
+          <button class="btn-login-submit" style="background:var(--green-accent);" onclick="submitRegistration()">Submit Request ➔</button>
+          
+          <div class="forget-link" onclick="toggleAuthMode('login')" style="margin-top:16px;">← Back to Login Portal</div>
+          <div class="auth-error" id="regErrorMsg"></div>
+        </div>
       </div>
 
-      <!-- LOGIN CARD -->
-      <div class="auth-card" id="loginCard">
-        <div class="auth-brand">
-          <span class="noon-txt">NOON</span>
-          <span class="ops-badge">MIDDLE MILE</span>
+      <!-- RIGHT SIDE: CONSOLIDATED DOCKS 07 TO 13 -->
+      <div class="auth-right-docks-panel">
+        <div class="sidebar-title">⚡ BAY DOCKS MONITOR (07 - 13)</div>
+        <div class="docks-vertical-scroll">
+          <div class="dock-card">
+            <div class="dock-header"><span>DOCK 07</span> <span class="pulse-led green"></span></div>
+            <div class="dock-sub">Loading • TR-4821</div>
+          </div>
+          <div class="dock-card">
+            <div class="dock-header"><span>DOCK 08</span> <span class="pulse-led green"></span></div>
+            <div class="dock-sub">Loading • TR-9902</div>
+          </div>
+          <div class="dock-card">
+            <div class="dock-header"><span>DOCK 09</span> <span class="pulse-led yellow"></span></div>
+            <div class="dock-sub">Staging • TR-1044</div>
+          </div>
+          <div class="dock-card">
+            <div class="dock-header"><span>DOCK 10</span> <span class="pulse-led red"></span></div>
+            <div class="dock-sub">Maintenance</div>
+          </div>
+          <div class="dock-card">
+            <div class="dock-header"><span>DOCK 11</span> <span class="pulse-led green"></span></div>
+            <div class="dock-sub">Loading • TR-3011</div>
+          </div>
+          <div class="dock-card">
+            <div class="dock-header"><span>DOCK 12</span> <span class="pulse-led green"></span></div>
+            <div class="dock-sub">Dispatched • TR-7712</div>
+          </div>
+          <div class="dock-card">
+            <div class="dock-header"><span>DOCK 13</span> <span class="pulse-led yellow"></span></div>
+            <div class="dock-sub">Staging • TR-8813</div>
+          </div>
         </div>
-        <p class="auth-sub">Middle Mile Fleet & Attendance Command Portal</p>
-        
-        <div class="input-field-group">
-          <label>Corporate Work Email</label>
-          <input type="email" id="authEmailInput" placeholder="name@noon.com" autocomplete="off">
-        </div>
-
-        <div class="input-field-group">
-          <label>Security Passcode</label>
-          <input type="password" id="authPasscodeInput" placeholder="••••••••" maxlength="30" onkeypress="handleAuthKey(event)">
-        </div>
-
-        <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
-        
-        <div style="display:flex; justify-content:space-between; margin-top:16px;">
-          <span class="forget-link" onclick="toggleAuthMode('register')">Create New Account</span>
-          <span class="forget-link" onclick="toggleForgetModal(true)">Forgot Passcode?</span>
-        </div>
-        <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
-      </div>
-
-      <!-- REGISTER CARD -->
-      <div class="auth-card" id="registerCard" style="display:none;">
-        <div class="auth-brand">
-          <span class="noon-txt">NOON</span>
-          <span class="ops-badge">REGISTER</span>
-        </div>
-        <p class="auth-sub">Request Access Credentials</p>
-        
-        <div class="input-field-group">
-          <label>Full Name</label>
-          <input type="text" id="regNameInput" placeholder="e.g. Ahmed Hassan">
-        </div>
-
-        <div class="input-field-group">
-          <label>Corporate Work Email</label>
-          <input type="email" id="regEmailInput" placeholder="name@noon.com">
-        </div>
-
-        <div class="input-field-group">
-          <label>Choose Passcode</label>
-          <input type="password" id="regPasscodeInput" placeholder="••••••••" maxlength="30">
-        </div>
-
-        <button class="btn-login-submit" style="background:var(--green-accent);" onclick="submitRegistration()">Submit Request ➔</button>
-        
-        <div class="forget-link" onclick="toggleAuthMode('login')" style="margin-top:16px;">← Back to Login Portal</div>
-        <div class="auth-error" id="regErrorMsg"></div>
-      </div>
-    </div>
-
-    <!-- RIGHT SIDE: DOCKS 11 TO 13 LIVE MONITOR -->
-    <div class="auth-docks-sidebar right-docks">
-      <div class="sidebar-title">⚡ BAY EXTENSIONS</div>
-      <div class="dock-card">
-        <div class="dock-header"><span>DOCK 11</span> <span class="pulse-led green"></span></div>
-        <div class="dock-sub">Loading • TR-3011</div>
-      </div>
-      <div class="dock-card">
-        <div class="dock-header"><span>DOCK 12</span> <span class="pulse-led green"></span></div>
-        <div class="dock-sub">Dispatched • TR-7712</div>
-      </div>
-      <div class="dock-card">
-        <div class="dock-header"><span>DOCK 13</span> <span class="pulse-led yellow"></span></div>
-        <div class="dock-sub">Staging • TR-8813</div>
       </div>
     </div>
   </div>
