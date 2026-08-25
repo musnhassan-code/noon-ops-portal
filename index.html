@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>noon MINUTES OPS | Middle Mile Command Center</title>
+  <title>NOON MINUTES OPS | Middle Mile Command Center</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -11,93 +11,153 @@
 </head>
 <body>
 
-  <!-- AUTHENTICATION OVERLAY WITH LOGIN & REGISTRATION -->
+  <!-- EXECUTIVE WELCOME SPLASH OVERLAY -->
+  <div id="welcomeSplash" class="welcome-splash-overlay">
+    <div class="splash-content">
+      <div class="splash-logo">
+        <span class="noon-txt">NOON</span>
+        <span class="ops-badge">MINUTES</span>
+      </div>
+      <h1 class="splash-title">WELCOME TO NOON MINUTES</h1>
+      <p class="splash-subtitle">MIDDLE MILE OPERATIONS & DISPATCH COMMAND CENTER</p>
+      
+      <div class="splash-transit-bar">
+        <div class="splash-truck-icon">🚚</div>
+        <div class="splash-progress-fill"></div>
+      </div>
+
+      <button class="btn-splash-enter" onclick="dismissWelcomeSplash()">ENTER COMMAND PORTAL ➔</button>
+    </div>
+  </div>
+
+  <!-- AUTHENTICATION OVERLAY WITH DOCKS CONTROL TOWER -->
   <div id="authOverlay">
     <div class="speed-grid-lines"></div>
 
-    <div class="jumbo-truck-container">
-      <div class="jumbo-truck">
-        <div class="truck-container-box">
-          <div class="container-graphics">
-            <div class="stripe-red"></div>
-            <div class="stripe-dark"></div>
-            <div class="text-everything">MIDDLE MILE<br>OPS PORTAL</div>
-            <div class="logo-wrap-mini">
-              <span class="logo-noon">noon</span>
-              <span class="logo-minutes">MINUTES</span>
+    <!-- LEFT SIDE: DOCKS 07 TO 13 LIVE MONITOR -->
+    <div class="auth-docks-sidebar left-docks">
+      <div class="sidebar-title">⚡ DOCK BAY MONITOR</div>
+      <div class="dock-card">
+        <div class="dock-header"><span>DOCK 07</span> <span class="pulse-led green"></span></div>
+        <div class="dock-sub">Loading • TR-4821</div>
+      </div>
+      <div class="dock-card">
+        <div class="dock-header"><span>DOCK 08</span> <span class="pulse-led green"></span></div>
+        <div class="dock-sub">Loading • TR-9902</div>
+      </div>
+      <div class="dock-card">
+        <div class="dock-header"><span>DOCK 09</span> <span class="pulse-led yellow"></span></div>
+        <div class="dock-sub">Staging • TR-1044</div>
+      </div>
+      <div class="dock-card">
+        <div class="dock-header"><span>DOCK 10</span> <span class="pulse-led red"></span></div>
+        <div class="dock-sub">Maintenance</div>
+      </div>
+    </div>
+
+    <!-- CENTER LOGIN / REGISTER PANEL -->
+    <div class="auth-center-wrap">
+      <div class="jumbo-truck-container">
+        <div class="jumbo-truck">
+          <div class="truck-container-box">
+            <div class="container-graphics">
+              <div class="stripe-red"></div>
+              <div class="stripe-dark"></div>
+              <div class="text-everything">MIDDLE MILE<br>OPS PORTAL</div>
+              <div class="logo-wrap-mini">
+                <span class="logo-noon">NOON</span>
+                <span class="logo-minutes">MINUTES</span>
+              </div>
+              <div class="side-door"></div>
             </div>
-            <div class="side-door"></div>
           </div>
+
+          <div class="truck-cabin">
+            <div class="cabin-window"></div>
+            <div class="cabin-headlight"></div>
+          </div>
+
+          <div class="underglow-leds"></div>
+
+          <div class="truck-wheel wheel-back-1"></div>
+          <div class="truck-wheel wheel-back-2"></div>
+          <div class="truck-wheel wheel-front"></div>
+        </div>
+        <div class="truck-road-line"></div>
+      </div>
+
+      <!-- LOGIN CARD -->
+      <div class="auth-card" id="loginCard">
+        <div class="auth-brand">
+          <span class="noon-txt">NOON</span>
+          <span class="ops-badge">MIDDLE MILE</span>
+        </div>
+        <p class="auth-sub">Middle Mile Fleet & Attendance Command Portal</p>
+        
+        <div class="input-field-group">
+          <label>Corporate Work Email</label>
+          <input type="email" id="authEmailInput" placeholder="name@noon.com" autocomplete="off">
         </div>
 
-        <div class="truck-cabin">
-          <div class="cabin-window"></div>
-          <div class="cabin-headlight"></div>
+        <div class="input-field-group">
+          <label>Security Passcode</label>
+          <input type="password" id="authPasscodeInput" placeholder="••••••••" maxlength="30" onkeypress="handleAuthKey(event)">
         </div>
 
-        <div class="underglow-leds"></div>
-
-        <div class="truck-wheel wheel-back-1"></div>
-        <div class="truck-wheel wheel-back-2"></div>
-        <div class="truck-wheel wheel-front"></div>
+        <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
+        
+        <div style="display:flex; justify-content:space-between; margin-top:16px;">
+          <span class="forget-link" onclick="toggleAuthMode('register')">Create New Account</span>
+          <span class="forget-link" onclick="toggleForgetModal(true)">Forgot Passcode?</span>
+        </div>
+        <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
       </div>
-      <div class="truck-road-line"></div>
+
+      <!-- REGISTER CARD -->
+      <div class="auth-card" id="registerCard" style="display:none;">
+        <div class="auth-brand">
+          <span class="noon-txt">NOON</span>
+          <span class="ops-badge">REGISTER</span>
+        </div>
+        <p class="auth-sub">Request Access Credentials</p>
+        
+        <div class="input-field-group">
+          <label>Full Name</label>
+          <input type="text" id="regNameInput" placeholder="e.g. Ahmed Hassan">
+        </div>
+
+        <div class="input-field-group">
+          <label>Corporate Work Email</label>
+          <input type="email" id="regEmailInput" placeholder="name@noon.com">
+        </div>
+
+        <div class="input-field-group">
+          <label>Choose Passcode</label>
+          <input type="password" id="regPasscodeInput" placeholder="••••••••" maxlength="30">
+        </div>
+
+        <button class="btn-login-submit" style="background:var(--green-accent);" onclick="submitRegistration()">Submit Request ➔</button>
+        
+        <div class="forget-link" onclick="toggleAuthMode('login')" style="margin-top:16px;">← Back to Login Portal</div>
+        <div class="auth-error" id="regErrorMsg"></div>
+      </div>
     </div>
 
-    <!-- LOGIN CARD -->
-    <div class="auth-card" id="loginCard">
-      <div class="auth-brand">
-        <span class="noon-txt">noon</span>
-        <span class="ops-badge">MIDDLE MILE</span>
+    <!-- RIGHT SIDE: DOCKS 11 TO 13 LIVE MONITOR -->
+    <div class="auth-docks-sidebar right-docks">
+      <div class="sidebar-title">⚡ BAY EXTENSIONS</div>
+      <div class="dock-card">
+        <div class="dock-header"><span>DOCK 11</span> <span class="pulse-led green"></span></div>
+        <div class="dock-sub">Loading • TR-3011</div>
       </div>
-      <p class="auth-sub">Middle Mile Fleet & Attendance Command Portal</p>
-      
-      <div class="input-field-group">
-        <label>Corporate Work Email</label>
-        <input type="email" id="authEmailInput" placeholder="name@noon.com" autocomplete="off">
+      <div class="dock-card">
+        <div class="dock-header"><span>DOCK 12</span> <span class="pulse-led green"></span></div>
+        <div class="dock-sub">Dispatched • TR-7712</div>
       </div>
-
-      <div class="input-field-group">
-        <label>Security Passcode</label>
-        <input type="password" id="authPasscodeInput" placeholder="••••••••" maxlength="30" onkeypress="handleAuthKey(event)">
+      <div class="dock-card">
+        <div class="dock-header"><span>DOCK 13</span> <span class="pulse-led yellow"></span></div>
+        <div class="dock-sub">Staging • TR-8813</div>
       </div>
-
-      <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
-      
-      <div style="display:flex; justify-content:space-between; margin-top:16px;">
-        <span class="forget-link" onclick="toggleAuthMode('register')">Create New Account</span>
-        <span class="forget-link" onclick="toggleForgetModal(true)">Forgot Passcode?</span>
-      </div>
-      <div class="auth-error" id="authErrorMsg">⚠️ Invalid credentials or disabled user account.</div>
-    </div>
-
-    <!-- REGISTER CARD -->
-    <div class="auth-card" id="registerCard" style="display:none;">
-      <div class="auth-brand">
-        <span class="noon-txt">noon</span>
-        <span class="ops-badge">REGISTER</span>
-      </div>
-      <p class="auth-sub">Request Access Credentials</p>
-      
-      <div class="input-field-group">
-        <label>Full Name</label>
-        <input type="text" id="regNameInput" placeholder="e.g. Mustafa Nasser Ali">
-      </div>
-
-      <div class="input-field-group">
-        <label>Corporate Work Email</label>
-        <input type="email" id="regEmailInput" placeholder="name@noon.com">
-      </div>
-
-      <div class="input-field-group">
-        <label>Choose Passcode</label>
-        <input type="password" id="regPasscodeInput" placeholder="••••••••" maxlength="30">
-      </div>
-
-      <button class="btn-login-submit" style="background:var(--green-accent);" onclick="submitRegistration()">Submit Request ➔</button>
-      
-      <div class="forget-link" onclick="toggleAuthMode('login')" style="margin-top:16px;">← Back to Login Portal</div>
-      <div class="auth-error" id="regErrorMsg"></div>
     </div>
   </div>
 
@@ -105,7 +165,7 @@
   <div id="forgetModal" style="display: none;">
     <div class="auth-card">
       <div class="auth-brand">
-        <span class="noon-txt">noon</span>
+        <span class="noon-txt">NOON</span>
         <span class="ops-badge">RESET</span>
       </div>
       <p class="auth-sub">Enter your email to send a passcode reset request to Master Admin.</p>
@@ -161,7 +221,7 @@
           <div class="map-visual-box" id="mapVisualBox">
             <div class="map-path-line"></div>
             <div class="map-mini-van">
-              <div class="mini-van-body">noon</div>
+              <div class="mini-van-body">NOON</div>
             </div>
           </div>
 
@@ -183,7 +243,7 @@
   <!-- TOP NAVBAR -->
   <header class="top-navbar">
     <div class="brand-logo">
-      <span class="noon-text">noon</span>
+      <span class="noon-text">NOON</span>
       <span class="ops-badge">MIDDLE MILE</span>
     </div>
 
@@ -240,14 +300,22 @@
         </div>
 
         <div class="action-bar">
-          <div class="filter-group">
-            <label>📅 From Date:</label>
-            <input type="date" id="attFilterFrom" onchange="applyAttendanceFilters()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
-          </div>
-
-          <div class="filter-group">
-            <label>📅 To Date:</label>
-            <input type="date" id="attFilterTo" onchange="applyAttendanceFilters()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+          <div class="date-picker-dropdown">
+            <button class="date-picker-btn" onclick="toggleDatePickerMenu('attDatePickerMenu')">
+              📅 <span id="attDateLabel">All Dates</span> ▾
+            </button>
+            <div class="date-picker-menu" id="attDatePickerMenu">
+              <div onclick="selectQuickDate('att', 'TODAY')">Today</div>
+              <div onclick="selectQuickDate('att', 'YESTERDAY')">Yesterday</div>
+              <div onclick="selectQuickDate('att', 'LAST7')">Last 7 Days</div>
+              <div onclick="selectQuickDate('att', 'LAST30')">Last 30 Days</div>
+              <div class="menu-divider"></div>
+              <div onclick="toggleCustomRangeInput('att')">Customize Range...</div>
+              <div class="custom-range-box" id="attCustomRangeBox" style="display:none;">
+                <input type="date" id="attFilterFrom" onchange="applyAttendanceFilters()">
+                <input type="date" id="attFilterTo" onchange="applyAttendanceFilters()">
+              </div>
+            </div>
           </div>
 
           <div class="filter-group">
@@ -335,21 +403,22 @@
         </div>
 
         <div class="action-bar">
-          <div class="filter-group">
-            <label>📅 Date:</label>
-            <select id="deDateFilter" onchange="applyDataEntryFilters()">
-              <option value="ALL">All Dates</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label>📅 From Date:</label>
-            <input type="date" id="deFilterFrom" onchange="applyDataEntryFilters()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
-          </div>
-
-          <div class="filter-group">
-            <label>📅 To Date:</label>
-            <input type="date" id="deFilterTo" onchange="applyDataEntryFilters()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+          <div class="date-picker-dropdown">
+            <button class="date-picker-btn" onclick="toggleDatePickerMenu('deDatePickerMenu')">
+              📅 <span id="deDateLabel">All Dates</span> ▾
+            </button>
+            <div class="date-picker-menu" id="deDatePickerMenu">
+              <div onclick="selectQuickDate('de', 'TODAY')">Today</div>
+              <div onclick="selectQuickDate('de', 'YESTERDAY')">Yesterday</div>
+              <div onclick="selectQuickDate('de', 'LAST7')">Last 7 Days</div>
+              <div onclick="selectQuickDate('de', 'LAST30')">Last 30 Days</div>
+              <div class="menu-divider"></div>
+              <div onclick="toggleCustomRangeInput('de')">Customize Range...</div>
+              <div class="custom-range-box" id="deCustomRangeBox" style="display:none;">
+                <input type="date" id="deFilterFrom" onchange="applyDataEntryFilters()">
+                <input type="date" id="deFilterTo" onchange="applyDataEntryFilters()">
+              </div>
+            </div>
           </div>
 
           <div class="filter-group">
@@ -480,7 +549,7 @@
       </div>
     </div>
 
-    <!-- NEW VIEW 3: DRIVERS ANALYTICS & FLEET COMMAND CENTER -->
+    <!-- VIEW 3: DRIVERS ANALYTICS & FLEET COMMAND CENTER -->
     <div id="driversView" class="tab-view">
       <div class="page-container">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
@@ -511,14 +580,22 @@
         </div>
 
         <div class="action-bar">
-          <div class="filter-group">
-            <label>📅 From Date:</label>
-            <input type="date" id="drvFilterFrom" onchange="renderDriversDashboard()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
-          </div>
-
-          <div class="filter-group">
-            <label>📅 To Date:</label>
-            <input type="date" id="drvFilterTo" onchange="renderDriversDashboard()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+          <div class="date-picker-dropdown">
+            <button class="date-picker-btn" onclick="toggleDatePickerMenu('drvDatePickerMenu')">
+              📅 <span id="drvDateLabel">All Dates</span> ▾
+            </button>
+            <div class="date-picker-menu" id="drvDatePickerMenu">
+              <div onclick="selectQuickDate('drv', 'TODAY')">Today</div>
+              <div onclick="selectQuickDate('drv', 'YESTERDAY')">Yesterday</div>
+              <div onclick="selectQuickDate('drv', 'LAST7')">Last 7 Days</div>
+              <div onclick="selectQuickDate('drv', 'LAST30')">Last 30 Days</div>
+              <div class="menu-divider"></div>
+              <div onclick="toggleCustomRangeInput('drv')">Customize Range...</div>
+              <div class="custom-range-box" id="drvCustomRangeBox" style="display:none;">
+                <input type="date" id="drvFilterFrom" onchange="renderDriversDashboard()">
+                <input type="date" id="drvFilterTo" onchange="renderDriversDashboard()">
+              </div>
+            </div>
           </div>
 
           <button class="btn btn-red" onclick="renderDriversDashboard()">🔄 Refresh Driver Metrics</button>
@@ -562,37 +639,28 @@
           <button class="btn btn-green" onclick="exportDailyReportExcel()">📊 Export Daily Analytics Excel</button>
         </div>
 
-        <!-- DYNAMIC FILTER BAR FOR DAILY ANALYTICS -->
         <div class="action-bar">
-          <div class="filter-group">
-            <label>🎯 Filter Mode:</label>
-            <select id="rptFilterMode" onchange="toggleDailyFilterMode()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px; font-weight:800;">
-              <option value="RANGE">Date Range (From / To)</option>
-              <option value="SINGLE">Single Day Select</option>
-            </select>
-          </div>
-
-          <div class="filter-group" id="rptSingleGroup" style="display:none;">
-            <label>📅 Select Date:</label>
-            <select id="rptSingleDateSelect" onchange="renderDailyReportDashboard()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
-              <option value="ALL">All Dates</option>
-            </select>
-          </div>
-
-          <div class="filter-group" id="rptRangeFromGroup">
-            <label>📅 From Date:</label>
-            <input type="date" id="rptFilterFrom" onchange="renderDailyReportDashboard()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
-          </div>
-
-          <div class="filter-group" id="rptRangeToGroup">
-            <label>📅 To Date:</label>
-            <input type="date" id="rptFilterTo" onchange="renderDailyReportDashboard()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+          <div class="date-picker-dropdown">
+            <button class="date-picker-btn" onclick="toggleDatePickerMenu('rptDatePickerMenu')">
+              📅 <span id="rptDateLabel">All Dates Range</span> ▾
+            </button>
+            <div class="date-picker-menu" id="rptDatePickerMenu">
+              <div onclick="selectQuickDate('rpt', 'TODAY')">Today</div>
+              <div onclick="selectQuickDate('rpt', 'YESTERDAY')">Yesterday</div>
+              <div onclick="selectQuickDate('rpt', 'LAST7')">Last 7 Days</div>
+              <div onclick="selectQuickDate('rpt', 'LAST30')">Last 30 Days</div>
+              <div class="menu-divider"></div>
+              <div onclick="toggleCustomRangeInput('rpt')">Customize Range...</div>
+              <div class="custom-range-box" id="rptCustomRangeBox" style="display:none;">
+                <input type="date" id="rptFilterFrom" onchange="renderDailyReportDashboard()">
+                <input type="date" id="rptFilterTo" onchange="renderDailyReportDashboard()">
+              </div>
+            </div>
           </div>
 
           <button class="btn btn-red" onclick="renderDailyReportDashboard()">🔄 Refresh Daily Metrics</button>
         </div>
 
-        <!-- KPI SUMMARY CARDS FOR DAILY METRICS -->
         <div class="stats-row">
           <div class="stat-card">
             <div class="val" id="rptKpiQty" style="color: var(--green-accent);">0</div>
@@ -626,7 +694,6 @@
           </div>
         </div>
 
-        <!-- TWO DYNAMIC CHARTS SIDE BY SIDE -->
         <div class="analytics-grid">
           <div class="analytics-card" style="flex: 1 1 500px; padding:20px;">
             <h3 style="font-size:13px; font-weight:800; text-transform:uppercase;">📈 Daily Volume Trends & Totes Breakdown</h3>
@@ -643,7 +710,6 @@
           </div>
         </div>
 
-        <!-- OPERATIONAL HEATMAP MATRIX CARD -->
         <div class="table-card" style="padding:20px;">
           <h3 style="font-size:13px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
             <span>🔥 Operational Dispatch Intensity Heatmap</span>
@@ -667,7 +733,6 @@
           </div>
         </div>
 
-        <!-- DAILY BREAKDOWN MAIN TABLE -->
         <div class="table-card">
           <div style="padding:14px 18px; font-weight:800; font-size:13px; border-bottom:1px solid var(--border-color); text-transform:uppercase;">
             📋 Aggregated Daily Operations Summary Log
