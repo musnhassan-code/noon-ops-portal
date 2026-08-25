@@ -190,6 +190,7 @@
     <div class="nav-tabs" id="navbarTabs">
       <button class="nav-tab-btn active" id="btnTabAttendance" onclick="switchMainTab('attendanceView')">🚚 Fleet Attendance</button>
       <button class="nav-tab-btn" id="btnTabTrips" onclick="switchMainTab('dataEntryView')">🗂️ Middle Mile Command Center</button>
+      <button class="nav-tab-btn" id="btnTabDrivers" onclick="switchMainTab('driversView')">👨‍✈️ Drivers Analytics & Fleet</button>
       <button class="nav-tab-btn" id="btnTabDailyReport" onclick="switchMainTab('dailyReportView')">📊 Daily Performance & Analytics</button>
       <button class="nav-tab-btn" id="btnTabAdmin" onclick="switchMainTab('adminTabView')" style="display:none; color:#f59e0b;">👑 Admin Control</button>
     </div>
@@ -479,7 +480,78 @@
       </div>
     </div>
 
-    <!-- VIEW 3: DAILY PERFORMANCE & ADVANCED ANALYTICS -->
+    <!-- NEW VIEW 3: DRIVERS ANALYTICS & FLEET COMMAND CENTER -->
+    <div id="driversView" class="tab-view">
+      <div class="page-container">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h1 class="page-title">👨‍✈️ Driver Performance & Vehicle Cold-Chain Metrics</h1>
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Deep Performance Analytics per Driver, Vehicle Load, Temperature Breaches & Efficiency</div>
+          </div>
+          <button class="btn btn-green" onclick="exportDriversReportExcel()">📊 Export Driver Performance Excel</button>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="val" id="drvKpiTotalDrivers">0</div>
+            <div class="lbl">Active Drivers</div>
+          </div>
+          <div class="stat-card">
+            <div class="val" id="drvKpiTotalTrips" style="color: var(--blue-accent);">0</div>
+            <div class="lbl">Total Trips Executed</div>
+          </div>
+          <div class="stat-card">
+            <div class="val" id="drvKpiTotalUnits" style="color: var(--green-accent);">0</div>
+            <div class="lbl">Dispatched Units (QTY)</div>
+          </div>
+          <div class="stat-card">
+            <div class="val" id="drvKpiAvgTemp" style="color: var(--warning-yellow);">0°C</div>
+            <div class="lbl">Avg Vehicle Temp</div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <div class="filter-group">
+            <label>📅 From Date:</label>
+            <input type="date" id="drvFilterFrom" onchange="renderDriversDashboard()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+          </div>
+
+          <div class="filter-group">
+            <label>📅 To Date:</label>
+            <input type="date" id="drvFilterTo" onchange="renderDriversDashboard()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--input-bg); color:var(--text-main); font-size:12px;">
+          </div>
+
+          <button class="btn btn-red" onclick="renderDriversDashboard()">🔄 Refresh Driver Metrics</button>
+
+          <input type="text" id="drvSearchInput" placeholder="🔍 Search Driver Name, Vehicle Plate..." onkeyup="renderDriversDashboard()" style="margin-left: auto; width: 260px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;">
+        </div>
+
+        <div class="table-card">
+          <div class="table-container">
+            <table class="main-table">
+              <thead>
+                <tr>
+                  <th>Driver Name</th>
+                  <th>Vehicle Plate</th>
+                  <th>Trips Executed</th>
+                  <th>Total Dispatched QTY</th>
+                  <th>Total Pallets</th>
+                  <th>Total Totes</th>
+                  <th>Stores Served</th>
+                  <th>Avg Vehicle Temp (°C)</th>
+                  <th>Temp Safety Status</th>
+                </tr>
+              </thead>
+              <tbody id="driversReportTableBody">
+                <tr><td colspan="9" class="empty-msg">Calculating driver metrics...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: DAILY PERFORMANCE & ADVANCED ANALYTICS -->
     <div id="dailyReportView" class="tab-view">
       <div class="page-container">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
@@ -625,7 +697,7 @@
       </div>
     </div>
 
-    <!-- VIEW 4: ADMIN CONTROL TAB -->
+    <!-- VIEW 5: ADMIN CONTROL TAB -->
     <div id="adminTabView" class="tab-view">
       <div class="page-container">
         <div>
