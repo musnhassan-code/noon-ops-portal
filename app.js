@@ -373,16 +373,20 @@ function parseCleanNumber(val) {
   return isNaN(num) ? 0 : num;
 }
 
-/* FORMAT DATE FUNCTION WITH ISO DATE STRIPPING */
+/* FORMAT DATE WITH STRICT UTC CONVERSION TO PREVENT TIMELINE OFFSET SHIFTS */
 function formatExcelDate(val) {
   if (!val) return "";
   
   let strVal = String(val).trim();
 
+  // معالجة تواريخ ISO ومنع ترحيل التاريخ لليوم السابق
   if (strVal.includes('T')) {
-    let dateOnly = strVal.split('T')[0];
-    if (dateOnly.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return dateOnly;
+    let d = new Date(strVal);
+    if (!isNaN(d.getTime())) {
+      let year = d.getUTCFullYear();
+      let month = String(d.getUTCMonth() + 1).padStart(2, '0');
+      let day = String(d.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
   }
 
@@ -401,9 +405,9 @@ function formatExcelDate(val) {
 
   let d = new Date(strVal);
   if (!isNaN(d.getTime())) {
-    let year = d.getFullYear();
-    let month = String(d.getMonth() + 1).padStart(2, '0');
-    let day = String(d.getDate()).padStart(2, '0');
+    let year = d.getUTCFullYear();
+    let month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    let day = String(d.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
@@ -481,9 +485,9 @@ function parseStandardDate(dateStr) {
   if (!dateStr) return "";
   let d = new Date(dateStr);
   if (!isNaN(d.getTime())) {
-    let year = d.getFullYear();
-    let month = String(d.getMonth() + 1).padStart(2, '0');
-    let day = String(d.getDate()).padStart(2, '0');
+    let year = d.getUTCFullYear();
+    let month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    let day = String(d.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
   return String(dateStr).trim();
@@ -582,8 +586,6 @@ async function fetchGoogleSheetData() {
 
   populateFilterDropdowns();
   bindFilterEventListeners();
-  
-  // ضبط الافتراضي ليصبح جميع التواريخ لعرض كامل البيانات
   selectQuickDate('de', 'ALL');
 }
 
@@ -1414,7 +1416,7 @@ async function renderPendingUsersTable() {
       <td><code>${u.passcode}</code></td>
       <td>
         <button class="btn" style="background:var(--green-accent); padding:4px 10px; font-size:11px;" onclick="updateUserApproval('${u.email}', 'ACTIVE')">✅ Approve & Grant Access</button>
-        <button class="btn" style="background:var(--primary-red); padding:4px 10px; font-size:11px;" onclick="updateUserApproval('${u.email}', 'REJECTED')">❌ Reject Request</button>
+        <button class="btn" style="background:var(--primary-red); font-size:11px;" onclick="updateUserApproval('${u.email}', 'REJECTED')">❌ Reject Request</button>
       </td>
     `;
     tbody.appendChild(tr);
