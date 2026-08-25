@@ -1,11 +1,6 @@
 /* GOOGLE APPS SCRIPT WEB APP API URL */
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhsrztw1GtSIjnBSxyD-qFCkYG3k1wqBwsaH6W2ZR7BWs4xm_qCCS9scKN3iPOtJDN/exec";
 
-/* DEFAULT SYSTEM PARAMETERS */
-let SHEET_ID = '1Mr_5nNopFFvu1mEPeqA33QJz2dS65aApJfGQEu91C9w';
-let GID_TRIPS = '0';
-let GID_ATTENDANCE = '2092258043';
-
 let globalAttendanceRaw = [];
 let filteredAttendance = [];
 let globalDataEntryRaw = [];
@@ -239,15 +234,18 @@ async function validateLogin() {
   }
 
   const users = await fetchUsersFromSheet();
-  const matchedUser = users.find(u => u.email === email && u.passcode === passcode);
+  const matchedUser = users.find(u => 
+    String(u.email).trim().toLowerCase() === email && 
+    String(u.passcode).trim() === passcode
+  );
 
   if (matchedUser) {
-    if (matchedUser.status === "PENDING") {
+    if (String(matchedUser.status).trim().toUpperCase() === "PENDING") {
       errorMsg.innerText = "⏳ Account pending Master Admin approval.";
       errorMsg.style.display = 'block';
       return;
     }
-    if (matchedUser.status === "REJECTED") {
+    if (String(matchedUser.status).trim().toUpperCase() === "REJECTED") {
       errorMsg.innerText = "❌ Registration request has been rejected.";
       errorMsg.style.display = 'block';
       return;
@@ -1209,7 +1207,7 @@ function renderDailyEfficiencyChart(data) {
       maintainAspectRatio: false,
       scales: {
         x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(245, 158, 11, 0.05)' } },
         y1: { type: 'linear', position: 'right', ticks: { color: '#3b82f6' }, grid: { drawOnChartArea: false } }
       },
       plugins: { legend: { labels: { color: '#f8fafc' } } }
@@ -1432,44 +1430,6 @@ async function updateUserApproval(email, status) {
   }
 }
 
-function saveSheetConfig() {
-  const sheetInput = document.getElementById('cfgSheetIdInput');
-  const gidInput = document.getElementById('cfgGidInput');
-
-  if (!sheetInput || !gidInput) return;
-
-  const newSheetId = sheetInput.value.trim();
-  const newGid = gidInput.value.trim();
-
-  if (!newSheetId || !newGid) {
-    alert("⚠️ Please fill in both Google Sheet ID and Tab GID Number!");
-    return;
-  }
-
-  localStorage.setItem('noon_ops_sheet_id', newSheetId);
-  localStorage.setItem('noon_ops_gid_id', newGid);
-
-  SHEET_ID = newSheetId;
-  GID_TRIPS = newGid;
-
-  alert("✅ Parameters saved! Re-syncing...");
-  fetchGoogleSheetData();
-}
-
-function loadSheetConfig() {
-  const savedSheetId = localStorage.getItem('noon_ops_sheet_id');
-  const savedGid = localStorage.getItem('noon_ops_gid_id');
-
-  if (savedSheetId && savedSheetId.trim() !== "") SHEET_ID = savedSheetId;
-  if (savedGid && savedGid.trim() !== "") GID_TRIPS = savedGid;
-
-  const sheetInput = document.getElementById('cfgSheetIdInput');
-  const gidInput = document.getElementById('cfgGidInput');
-
-  if (sheetInput) sheetInput.value = SHEET_ID;
-  if (gidInput) gidInput.value = GID_TRIPS;
-}
-
 /* GLOBAL CLICK DISMISS FOR DROPDOWNS */
 window.onclick = function(e) {
   if (!e.target.matches('.date-picker-btn') && !e.target.closest('.date-picker-dropdown')) {
@@ -1481,10 +1441,8 @@ window.onclick = function(e) {
 window.onload = function() {
   initTheme();
   checkWelcomeSplash();
-  loadSheetConfig();
   checkAuthSession();
 
-  // Reset default filters to ALL DATES on startup
   if (document.getElementById('attDateLabel')) document.getElementById('attDateLabel').innerText = "All Dates";
   if (document.getElementById('attFilterFrom')) document.getElementById('attFilterFrom').value = "";
   if (document.getElementById('attFilterTo')) document.getElementById('attFilterTo').value = "";
