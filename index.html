@@ -34,14 +34,32 @@
   <div id="authOverlay">
     <div class="speed-grid-lines"></div>
 
-    <!-- TOP FULL-WIDTH TRANSIT CORRIDOR (WH -> DS DARK STORE) -->
+    <!-- TOP FULL-WIDTH TRANSIT CORRIDOR WITH JUMBO TRUCK -->
     <div class="top-transit-corridor">
       <div class="transit-node wh-node">
         <span>🏬 WH (Main Warehouse)</span>
       </div>
       <div class="transit-road-line">
-        <div class="transit-moving-truck">
-          <div class="mini-van-body">NOON</div>
+        <!-- DETAILED JUMBO TRUCK ON LINEHAUL -->
+        <div class="transit-jumbo-truck">
+          <div class="truck-container-box">
+            <div class="container-graphics">
+              <div class="stripe-red"></div>
+              <div class="stripe-dark"></div>
+              <div class="text-everything">MIDDLE MILE</div>
+              <div class="logo-wrap-mini">
+                <span class="logo-noon">NOON</span>
+              </div>
+            </div>
+          </div>
+          <div class="truck-cabin">
+            <div class="cabin-window"></div>
+            <div class="cabin-headlight"></div>
+          </div>
+          <div class="underglow-leds"></div>
+          <div class="truck-wheel wheel-back-1"></div>
+          <div class="truck-wheel wheel-back-2"></div>
+          <div class="truck-wheel wheel-front"></div>
         </div>
       </div>
       <div class="transit-node ds-node">
@@ -82,7 +100,7 @@
 
           <button class="btn-login-submit" onclick="validateLogin()">Access System Portal ➔</button>
           
-          <div style="display:flex; justify-content:space-between; margin-top:18px;">
+          <div style="display:flex; justify-content:space-between; margin-top:22px;">
             <span class="forget-link" onclick="toggleAuthMode('register')">Create New Account</span>
             <span class="forget-link" onclick="toggleForgetModal(true)">Forgot Passcode?</span>
           </div>
