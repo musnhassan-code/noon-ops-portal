@@ -581,7 +581,22 @@ async function fetchGoogleSheetData() {
   }
 
   populateFilterDropdowns();
-  applyDataEntryFilters();
+  bindFilterEventListeners();
+  
+  // ضبط الافتراضي ليصبح جميع التواريخ لعرض كامل البيانات
+  selectQuickDate('de', 'ALL');
+}
+
+function bindFilterEventListeners() {
+  const deVehicle = document.getElementById('deVehicleFilter');
+  const deTrip = document.getElementById('deTripFilter');
+  const deTemp = document.getElementById('deTempFilter');
+  const deSearch = document.getElementById('deSearchInput');
+
+  if (deVehicle) deVehicle.onchange = applyDataEntryFilters;
+  if (deTrip) deTrip.onchange = applyDataEntryFilters;
+  if (deTemp) deTemp.onchange = applyDataEntryFilters;
+  if (deSearch) deSearch.oninput = applyDataEntryFilters;
 }
 
 function populateFilterDropdowns() {
