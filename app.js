@@ -87,7 +87,11 @@ function selectQuickDate(prefix, type) {
   let dd = String(today.getDate()).padStart(2, '0');
   let todayStr = `${yyyy}-${mm}-${dd}`;
 
-  if (type === 'TODAY') {
+  if (type === 'ALL') {
+    if (fromInput) fromInput.value = "";
+    if (toInput) toInput.value = "";
+    if (label) label.innerText = "All Dates";
+  } else if (type === 'TODAY') {
     if (fromInput) fromInput.value = todayStr;
     if (toInput) toInput.value = todayStr;
     if (label) label.innerText = "Today";
@@ -1225,7 +1229,7 @@ function renderDailyEfficiencyChart(data) {
       maintainAspectRatio: false,
       scales: {
         x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(245, 158, 11, 0.05)' } },
+        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
         y1: { type: 'linear', position: 'right', ticks: { color: '#3b82f6' }, grid: { drawOnChartArea: false } }
       },
       plugins: { legend: { labels: { color: '#f8fafc' } } }
@@ -1493,11 +1497,17 @@ window.onclick = function(e) {
   }
 };
 
-/* INITIALIZATION ON LOAD */
+/* INITIALIZATION ON LOAD WITH ALL DATES DEFAULT */
 window.onload = function() {
   initTheme();
   checkWelcomeSplash();
   loadSheetConfig();
   checkAuthSession();
+
+  // Reset default filters to ALL DATES on startup
+  if (document.getElementById('attDateLabel')) document.getElementById('attDateLabel').innerText = "All Dates";
+  if (document.getElementById('attFilterFrom')) document.getElementById('attFilterFrom').value = "";
+  if (document.getElementById('attFilterTo')) document.getElementById('attFilterTo').value = "";
+
   fetchAttendanceSheetData();
 };
