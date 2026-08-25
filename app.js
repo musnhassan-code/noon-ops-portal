@@ -354,34 +354,40 @@ function parseCleanNumber(val) {
   return isNaN(num) ? 0 : num;
 }
 
-/* FORMAT DATE FUNCTION (STRICT STRING HANDLING PREVENTING 31-05-2026 UTC SHIFT) */
+/* ROBUST DATE PARSER FOR TIMESTAMPS COMPARISON */
+function parseDateToTimestamp(val) {
+  if (!val) return 0;
+  let str = String(val).trim();
+  
+  if (str.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    let [y, m, d] = str.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d)).getTime();
+  }
+  
+  if (str.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+    let [d, m, y] = str.split('/').map(Number);
+    return new Date(Date.UTC(y, m - 1, d)).getTime();
+  }
+
+  let dt = new Date(str);
+  if (!isNaN(dt.getTime())) {
+    return Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
+  }
+  return 0;
+}
+
 function formatExcelDate(val) {
   if (!val) return "";
   let strVal = String(val).trim();
 
-  // لو جاية بصيغة YYYY-MM-DD ترجع مباشرة بدون المساس بالـ Timezone
-  if (strVal.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    return strVal;
-  }
+  if (strVal.match(/^\d{4}-\d{2}-\d{2}$/)) return strVal;
 
-  // لو جاية بصيغة DD/MM/YYYY
   if (strVal.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
     let parts = strVal.split('/');
     let d = parts[0].padStart(2, '0');
     let m = parts[1].padStart(2, '0');
     let y = parts[2];
     return `${y}-${m}-${d}`;
-  }
-
-  // معالجة تواريخ ISO وتثبيت التاريخ حسب التوقيت العالمي UTC
-  if (strVal.includes('T')) {
-    let d = new Date(strVal);
-    if (!isNaN(d.getTime())) {
-      let year = d.getUTCFullYear();
-      let month = String(d.getUTCMonth() + 1).padStart(2, '0');
-      let day = String(d.getUTCDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
   }
 
   let num = Number(val);
@@ -478,13 +484,18 @@ function parseAttendanceMatrix(matrix) {
 function applyAttendanceFilters() {
   const fromDate = document.getElementById('attFilterFrom') ? document.getElementById('attFilterFrom').value : '';
   const toDate = document.getElementById('attFilterTo') ? document.getElementById('attFilterTo').value : '';
-  const statusFilter = document.getElementById('attFilterStatus') ? document.getElementById('attFilterStatus').value : 'ALL';
-  const query = document.getElementById('attSearchInput') ? document.getElementById('attSearchInput').value.toLowerCase() : '';
+  const statusFilter = document.getElementById('attFilterStatus') ? document.getElementById('attFilterStatus').value.toUpperCase() : 'ALL';
+  const query = document.getElementById('attSearchInput') ? document.getElementById('attSearchInput').value.toLowerCase().trim() : '';
+
+  const fromTime = fromDate ? parseDateToTimestamp(fromDate) : 0;
+  const toTime = toDate ? parseDateToTimestamp(toDate) : 0;
 
   filteredAttendance = globalAttendanceRaw.filter(item => {
-    let matchFrom = !fromDate || item.date >= fromDate;
-    let matchTo = !toDate || item.date <= toDate;
-    let matchStatus = statusFilter === 'ALL' || item.attendanceStatus.toLowerCase() === statusFilter.toLowerCase();
+    let itemTime = parseDateToTimestamp(item.date);
+
+    let matchFrom = !fromTime || itemTime >= fromTime;
+    let matchTo = !toTime || itemTime <= toTime;
+    let matchStatus = statusFilter === 'ALL' || item.attendanceStatus.toUpperCase().trim() === statusFilter;
     let matchQuery = !query || 
       item.plate.toLowerCase().includes(query) || 
       item.entity.toLowerCase().includes(query) || 
@@ -623,16 +634,21 @@ function applyDataEntryFilters() {
   const selectedVehicle = document.getElementById('deVehicleFilter') ? document.getElementById('deVehicleFilter').value : 'ALL';
   const selectedTrip = document.getElementById('deTripFilter') ? document.getElementById('deTripFilter').value : 'ALL';
   const tempFilter = document.getElementById('deTempFilter') ? document.getElementById('deTempFilter').value : 'ALL';
-  const query = document.getElementById('deSearchInput') ? document.getElementById('deSearchInput').value.toLowerCase() : '';
+  const query = document.getElementById('deSearchInput') ? document.getElementById('deSearchInput').value.toLowerCase().trim() : '';
+
+  const fromTime = fromDate ? parseDateToTimestamp(fromDate) : 0;
+  const toTime = toDate ? parseDateToTimestamp(toDate) : 0;
 
   filteredDataEntry = globalDataEntryRaw.filter(row => {
-    const dateVal = formatExcelDate(row[0]); 
+    const dateVal = formatExcelDate(row[0]);
+    const rowTime = parseDateToTimestamp(dateVal);
+
     const tripVal = String(row[7] || "").trim(); 
     const vehVal  = String(row[8] || "").trim(); 
     const tempVal = parseCleanNumber(row[12]);
 
-    const matchFrom = !fromDate || dateVal >= fromDate;
-    const matchTo = !toDate || dateVal <= toDate;
+    const matchFrom = !fromTime || rowTime >= fromTime;
+    const matchTo = !toTime || rowTime <= toTime;
     const matchVehicle = (selectedVehicle === "ALL" || vehVal === selectedVehicle);
     const matchTrip = (selectedTrip === "ALL" || tripVal === selectedTrip);
     
@@ -762,7 +778,7 @@ function exportDataEntryExcel() {
   XLSX.writeFile(wb, `Dispatch_Operations_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-/* ANALYTICS CARDS ENGINE */
+/* ANALYTICS CARDS ENGINE WITH VISUAL PROGRESS BARS */
 function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
   const storeMap = {};
   const driverMap = {};
@@ -830,7 +846,7 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
       storeBody.innerHTML += `
         <tr>
           <td><strong>${st}</strong></td>
-          <td><strong>${val.toLocaleString()}</strong> QTY</td>
+          <td><strong>${val.toLocaleString()} QTY</strong></td>
           <td>
             <div style="display:flex; align-items:center; gap:8px;">
               <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;"></div></div>
@@ -882,14 +898,19 @@ function renderDriversDashboard() {
 
   const fromDate = document.getElementById('drvFilterFrom') ? document.getElementById('drvFilterFrom').value : '';
   const toDate = document.getElementById('drvFilterTo') ? document.getElementById('drvFilterTo').value : '';
-  const query = document.getElementById('drvSearchInput') ? document.getElementById('drvSearchInput').value.toLowerCase() : '';
+  const query = document.getElementById('drvSearchInput') ? document.getElementById('drvSearchInput').value.toLowerCase().trim() : '';
+
+  const fromTime = fromDate ? parseDateToTimestamp(fromDate) : 0;
+  const toTime = toDate ? parseDateToTimestamp(toDate) : 0;
 
   const driverMap = {};
 
   globalDataEntryRaw.forEach(r => {
     const dDate = formatExcelDate(r[0]);
-    if (fromDate && dDate < fromDate) return;
-    if (toDate && dDate > toDate) return;
+    const rTime = parseDateToTimestamp(dDate);
+
+    if (fromTime && rTime < fromTime) return;
+    if (toTime && rTime > toTime) return;
 
     const driver = String(r[9] || "Unassigned").trim();
     const veh = String(r[8] || "Unassigned").trim();
@@ -1011,6 +1032,9 @@ function renderDailyReportDashboard() {
   const fromDate = document.getElementById('rptFilterFrom') ? document.getElementById('rptFilterFrom').value : '';
   const toDate = document.getElementById('rptFilterTo') ? document.getElementById('rptFilterTo').value : '';
 
+  const fromTime = fromDate ? parseDateToTimestamp(fromDate) : 0;
+  const toTime = toDate ? parseDateToTimestamp(toDate) : 0;
+
   const dailyMap = {};
   const heatmapShiftMap = {};
 
@@ -1018,8 +1042,10 @@ function renderDailyReportDashboard() {
     const dDate = formatExcelDate(r[0]);
     if (!dDate) return;
 
-    if (fromDate && dDate < fromDate) return;
-    if (toDate && dDate > toDate) return;
+    const rTime = parseDateToTimestamp(dDate);
+
+    if (fromTime && rTime < fromTime) return;
+    if (toTime && rTime > toTime) return;
 
     const qty = parseCleanNumber(r[16]);
     const totes = parseCleanNumber(r[14]);
