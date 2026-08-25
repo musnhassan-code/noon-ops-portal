@@ -14,12 +14,25 @@ let remoteUsersList = [];
 let dailyChartInstance = null;
 let dailyEfficiencyChartInstance = null;
 
-/* WELCOME SPLASH DISMISSAL */
+/* WELCOME SPLASH DISMISSAL WITH SESSION PERSISTENCE */
+function checkWelcomeSplash() {
+  const splashSeen = sessionStorage.getItem('noon_ops_splash_seen');
+  const splash = document.getElementById('welcomeSplash');
+  if (splash) {
+    if (splashSeen === 'true') {
+      splash.style.display = 'none';
+    } else {
+      splash.style.display = 'flex';
+    }
+  }
+}
+
 function dismissWelcomeSplash() {
   const splash = document.getElementById('welcomeSplash');
   if (splash) {
     splash.style.opacity = '0';
     splash.style.pointerEvents = 'none';
+    sessionStorage.setItem('noon_ops_splash_seen', 'true');
     setTimeout(() => { splash.style.display = 'none'; }, 400);
   }
 }
@@ -346,6 +359,7 @@ function switchMainTab(targetId) {
 
 function logoutSession() {
   sessionStorage.removeItem('noon_ops_auth_user');
+  sessionStorage.removeItem('noon_ops_splash_seen');
   localStorage.removeItem('noon_ops_active_tab');
   location.reload();
 }
@@ -1211,7 +1225,7 @@ function renderDailyEfficiencyChart(data) {
       maintainAspectRatio: false,
       scales: {
         x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(245, 158, 11, 0.05)' } },
         y1: { type: 'linear', position: 'right', ticks: { color: '#3b82f6' }, grid: { drawOnChartArea: false } }
       },
       plugins: { legend: { labels: { color: '#f8fafc' } } }
@@ -1482,6 +1496,7 @@ window.onclick = function(e) {
 /* INITIALIZATION ON LOAD */
 window.onload = function() {
   initTheme();
+  checkWelcomeSplash();
   loadSheetConfig();
   checkAuthSession();
   fetchAttendanceSheetData();
