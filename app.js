@@ -1,5 +1,5 @@
 /* GOOGLE APPS SCRIPT WEB APP API URL */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQIrKh10aXyRTfuHnw6PvO7l7oCWhgK3Ek5nrf-gXKwV0AFtTRhhgft7kNo2VvnuIX/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhsrztw1GtSIjnBSxyD-qFCkYG3k1wqBwsaH6W2ZR7BWs4xm_qCCS9scKN3iPOtJDN/exec";
 
 /* DEFAULT SYSTEM PARAMETERS */
 let SHEET_ID = '1Mr_5nNopFFvu1mEPeqA33QJz2dS65aApJfGQEu91C9w';
@@ -126,7 +126,7 @@ function selectQuickDate(prefix, type) {
   else if (prefix === 'rpt') renderDailyReportDashboard();
 }
 
-/* FETCH USERS FROM GOOGLE SHEET */
+/* FETCH USERS FROM GOOGLE SHEET VIA API */
 async function fetchUsersFromSheet() {
   try {
     let res = await fetch(APPS_SCRIPT_URL);
@@ -390,36 +390,26 @@ function formatExcelDate(val) {
   return String(val).trim();
 }
 
-/* ATTENDANCE DATA ENGINE */
+/* ATTENDANCE DATA ENGINE VIA APPS SCRIPT API */
 async function fetchAttendanceSheetData() {
   const updatedTag = document.getElementById('attLastUpdatedTag');
   if (updatedTag) updatedTag.innerText = "⏳ Syncing Attendance Sheet...";
 
-  const attendanceCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_ATTENDANCE}&t=${Date.now()}`;
-
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-    let response = await fetch(attendanceCsvUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
-
+    let response = await fetch(`${APPS_SCRIPT_URL}?action=getAttendance`);
     if (!response.ok) throw new Error("Attendance Fetch Failure");
 
-    let csvText = await response.text();
-    let workbook = XLSX.read(csvText, { type: 'string' });
-    let sheet = workbook.Sheets[workbook.SheetNames[0]];
-    let matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+    let matrix = await response.json();
 
     if (matrix && matrix.length > 2) {
       parseAttendanceMatrix(matrix);
       if (updatedTag) updatedTag.innerText = `✅ Live Synced (${globalAttendanceRaw.length} Records) at ${new Date().toLocaleTimeString()}`;
     } else {
-      if (updatedTag) updatedTag.innerText = `⚠️ Attendance Tab Empty or Invalid.`;
+      if (updatedTag) updatedTag.innerText = `⚠️ Attendance Tab Empty.`;
     }
   } catch (err) {
     console.error("Attendance Fetch Error:", err);
-    if (updatedTag) updatedTag.innerText = `⚠️ Connection Error (Check Sheet Permissions)`;
+    if (updatedTag) updatedTag.innerText = `⚠️ Connection Error via Apps Script API`;
   }
 }
 
@@ -547,26 +537,16 @@ function exportAttendanceExcel() {
   XLSX.writeFile(wb, `Fleet_Attendance_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-/* TRIPS GOOGLE SHEET ENGINE */
+/* TRIPS GOOGLE SHEET ENGINE VIA APPS SCRIPT API */
 async function fetchGoogleSheetData() {
   const updatedTag = document.getElementById('lastUpdatedTag');
   if (updatedTag) updatedTag.innerText = "⏳ Syncing Google Sheets API...";
 
-  const googleLiveCsvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID_TRIPS}&t=${Date.now()}`;
-
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-    let response = await fetch(googleLiveCsvUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
-
+    let response = await fetch(`${APPS_SCRIPT_URL}?action=getTrips`);
     if (!response.ok) throw new Error("Connection Failure");
-    
-    let csvText = await response.text();
-    let workbook = XLSX.read(csvText, { type: 'string' });
-    let sheet = workbook.Sheets[workbook.SheetNames[0]];
-    let matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+    let matrix = await response.json();
 
     if (matrix && matrix.length > 1) {
       globalDataEntryRaw = matrix.slice(1).filter(r => r.some(c => String(c).trim() !== "")).map(r => {
@@ -577,7 +557,7 @@ async function fetchGoogleSheetData() {
     }
   } catch (err) {
     console.error("Fetch error:", err);
-    if (updatedTag) updatedTag.innerText = `⚠️ Connection Error (Check Sheet Access)`;
+    if (updatedTag) updatedTag.innerText = `⚠️ Connection Error via Apps Script API`;
   }
 
   populateFilterDropdowns();
