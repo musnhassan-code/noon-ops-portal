@@ -1,5 +1,5 @@
 /* GOOGLE APPS SCRIPT WEB APP API URL */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhsrztw1GtSIjnBSxyD-qFCkYG3k1wqBwsaH6W2ZR7BWs4xm_qCCS9scKN3iPOtJDN/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7qwNZa7zsTUYpF-vGqBkxD6OlVH8KJEw0bnFNjIzeOsM04LmAgPHrqr4g9KPqsF4/exec";
 
 let globalAttendanceRaw = [];
 let filteredAttendance = [];
@@ -1207,7 +1207,7 @@ function renderDailyEfficiencyChart(data) {
       maintainAspectRatio: false,
       scales: {
         x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(245, 158, 11, 0.05)' } },
+        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
         y1: { type: 'linear', position: 'right', ticks: { color: '#3b82f6' }, grid: { drawOnChartArea: false } }
       },
       plugins: { legend: { labels: { color: '#f8fafc' } } }
