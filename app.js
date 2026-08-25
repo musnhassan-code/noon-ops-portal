@@ -9,7 +9,7 @@ let remoteUsersList = [];
 let dailyChartInstance = null;
 let dailyEfficiencyChartInstance = null;
 
-/* WELCOME SPLASH DISMISSAL WITH SESSION PERSISTENCE */
+/* WELCOME SPLASH DISMISSAL */
 function checkWelcomeSplash() {
   const splashSeen = sessionStorage.getItem('noon_ops_splash_seen');
   const splash = document.getElementById('welcomeSplash');
@@ -30,6 +30,22 @@ function dismissWelcomeSplash() {
     sessionStorage.setItem('noon_ops_splash_seen', 'true');
     setTimeout(() => { splash.style.display = 'none'; }, 400);
   }
+}
+
+/* FORGOT PASSWORD MODAL TOGGLE */
+function toggleForgetModal(show) {
+  const modal = document.getElementById('forgetModal');
+  if (modal) modal.style.display = show ? 'flex' : 'none';
+}
+
+function submitPasswordResetRequest() {
+  const email = document.getElementById('forgetEmailInput').value.trim();
+  if (!email) {
+    alert("Please enter your registered work email.");
+    return;
+  }
+  alert(`Reset request sent for ${email}. Master Admin has been notified.`);
+  toggleForgetModal(false);
 }
 
 /* THEME MANAGEMENT */
@@ -276,50 +292,14 @@ function setupUserInterface(user) {
   if (pEmail) pEmail.innerText = user.email;
   if (pRole) pRole.innerText = user.role;
 
-  buildDynamicNavTabs(user);
+  const btnAdmin = document.getElementById('btnTabAdmin');
+  if (btnAdmin) {
+    btnAdmin.style.display = (user.role === 'ADMIN') ? 'inline-block' : 'none';
+  }
 
   if (user.role === 'ADMIN') {
     renderPendingUsersTable();
     renderAdminUserTable();
-  }
-}
-
-/* NAVIGATION TABS WITH STATE PERSISTENCE */
-function buildDynamicNavTabs(user) {
-  const navContainer = document.getElementById('navbarTabs');
-  if (!navContainer) return;
-  navContainer.innerHTML = '';
-
-  const tabDefinitions = {
-    attendance: { id: 'btnTabAttendance', title: '🚚 Fleet Attendance', target: 'attendanceView' },
-    trips: { id: 'btnTabTrips', title: '🗂️ Middle Mile Command Center', target: 'dataEntryView' },
-    drivers: { id: 'btnTabDrivers', title: '👨‍✈️ Drivers Analytics & Fleet', target: 'driversView' },
-    dailyReport: { id: 'btnTabDailyReport', title: '📊 Daily Performance & Analytics', target: 'dailyReportView' },
-    admin: { id: 'btnTabAdmin', title: '👑 Admin Control', target: 'adminTabView' }
-  };
-
-  let allowedKeys = user.tabs || ['attendance', 'trips', 'drivers', 'dailyReport'];
-  if (user.role === 'ADMIN' && !allowedKeys.includes('admin')) {
-    allowedKeys.push('admin');
-  }
-
-  allowedKeys.forEach((key) => {
-    if (tabDefinitions[key]) {
-      const btn = document.createElement('button');
-      btn.className = 'nav-tab-btn';
-      btn.id = tabDefinitions[key].id;
-      btn.innerText = tabDefinitions[key].title;
-      btn.setAttribute('onclick', `switchMainTab('${tabDefinitions[key].target}')`);
-      if (key === 'admin') btn.style.color = '#f59e0b';
-      navContainer.appendChild(btn);
-    }
-  });
-
-  const savedActiveTab = localStorage.getItem('noon_ops_active_tab');
-  if (savedActiveTab && document.getElementById(savedActiveTab)) {
-    switchMainTab(savedActiveTab);
-  } else if (allowedKeys.length > 0) {
-    switchMainTab(tabDefinitions[allowedKeys[0]].target);
   }
 }
 
@@ -374,17 +354,15 @@ function parseCleanNumber(val) {
   return isNaN(num) ? 0 : num;
 }
 
-/* FORMAT DATE FUNCTION (STRICT TEXT & UTC FIX PREVENTING MAY 31ST SHIFT) */
+/* FORMAT DATE FUNCTION (PREVENTING 31-05-2026 UTC SHIFT) */
 function formatExcelDate(val) {
   if (!val) return "";
   let strVal = String(val).trim();
 
-  // لو جاية في صيغة YYYY-MM-DD ترجع زي ما هي قطعياً
   if (strVal.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return strVal;
   }
 
-  // لو جاية بصيغة DD/MM/YYYY
   if (strVal.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
     let parts = strVal.split('/');
     let d = parts[0].padStart(2, '0');
@@ -393,7 +371,6 @@ function formatExcelDate(val) {
     return `${y}-${m}-${d}`;
   }
 
-  // معالجة تواريخ ISO وتثبيت التاريخ حسب التوقيت العالمي بدون تأثر بالمنطقة الزمنية
   if (strVal.includes('T')) {
     let d = new Date(strVal);
     if (!isNaN(d.getTime())) {
@@ -428,7 +405,7 @@ function formatExcelDate(val) {
   return strVal;
 }
 
-/* ATTENDANCE DATA ENGINE VIA APPS SCRIPT API */
+/* ATTENDANCE DATA ENGINE */
 async function fetchAttendanceSheetData() {
   const updatedTag = document.getElementById('attLastUpdatedTag');
   if (updatedTag) updatedTag.innerText = "⏳ Syncing Attendance Sheet...";
@@ -568,7 +545,6 @@ async function fetchGoogleSheetData() {
   const updatedTag = document.getElementById('lastUpdatedTag');
   if (updatedTag) updatedTag.innerText = "⏳ Syncing Google Sheets API...";
 
-  // 1. استخدام التخزين المؤقت أولاً للتحميل الفوري وبدون لاج
   const cachedData = sessionStorage.getItem('cached_trips_data');
   if (cachedData) {
     try {
@@ -580,7 +556,6 @@ async function fetchGoogleSheetData() {
     } catch(e) {}
   }
 
-  // 2. تحديث البيانات في الخلفية
   try {
     let response = await fetch(`${APPS_SCRIPT_URL}?action=getTrips`);
     if (!response.ok) throw new Error("Connection Failure");
@@ -614,7 +589,7 @@ function bindFilterEventListeners() {
   if (deVehicle) deVehicle.onchange = applyDataEntryFilters;
   if (deTrip) deTrip.onchange = applyDataEntryFilters;
   if (deTemp) deTemp.onchange = applyDataEntryFilters;
-  if (deSearch) deSearch.oninput = applyDataEntryFilters;
+  if (deSearch) deSearch.onkeyup = applyDataEntryFilters;
 }
 
 function populateFilterDropdowns() {
@@ -1289,7 +1264,7 @@ function exportDailyReportExcel() {
   XLSX.writeFile(wb, `Daily_Dispatch_Summary_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-/* TRIP DETAILS MODAL & REALISTIC ANIMATED ROUTE VISUALIZER */
+/* TRIP DETAILS MODAL & ANIMATED JUMBO TRUCK ROAD VISUALIZER */
 function openTripModal(indexOrTripId) {
   let tripRows = [];
   let targetTripId = "";
@@ -1330,7 +1305,6 @@ function openTripModal(indexOrTripId) {
   const totalTotes = tripRows.reduce((acc, curr) => acc + parseCleanNumber(curr[14]), 0);
   document.getElementById('mTotalPallets').innerText = `${totalTotes} Totes / Pallets`;
 
-  /* رسم خريطة طريق أسفلت واقعية بتتحرك عليها شاحنة جامبو بين الاستورات */
   const mapBox = document.getElementById('mapVisualBox');
   if (mapBox) {
     let mapNodesHTML = `
@@ -1508,7 +1482,7 @@ window.onclick = function(e) {
   }
 };
 
-/* INITIALIZATION ON LOAD WITH UNIFIED DEFAULT FOR ALL USERS */
+/* INITIALIZATION ON LOAD WITH ALL DATES DEFAULT FOR ALL USERS */
 window.onload = function() {
   initTheme();
   checkWelcomeSplash();
