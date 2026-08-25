@@ -373,19 +373,41 @@ function parseCleanNumber(val) {
   return isNaN(num) ? 0 : num;
 }
 
+/* FORMAT DATE FUNCTION WITH ISO DATE STRIPPING */
 function formatExcelDate(val) {
   if (!val) return "";
-  let num = Number(val);
-  if (!isNaN(num) && num > 30000 && num < 60000) {
-    let dateObj = XLSX.SSF.parse_date_code(num);
-    if (dateObj) {
-      let y = dateObj.y;
-      let m = String(dateObj.m).padStart(2, '0');
-      let d = String(dateObj.d).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+  
+  let strVal = String(val).trim();
+
+  if (strVal.includes('T')) {
+    let dateOnly = strVal.split('T')[0];
+    if (dateOnly.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return dateOnly;
     }
   }
-  return String(val).trim();
+
+  let num = Number(val);
+  if (!isNaN(num) && num > 30000 && num < 60000) {
+    if (typeof XLSX !== 'undefined' && XLSX.SSF) {
+      let dateObj = XLSX.SSF.parse_date_code(num);
+      if (dateObj) {
+        let y = dateObj.y;
+        let m = String(dateObj.m).padStart(2, '0');
+        let d = String(dateObj.d).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+    }
+  }
+
+  let d = new Date(strVal);
+  if (!isNaN(d.getTime())) {
+    let year = d.getFullYear();
+    let month = String(d.getMonth() + 1).padStart(2, '0');
+    let day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  return strVal;
 }
 
 /* ATTENDANCE DATA ENGINE VIA APPS SCRIPT API */
@@ -1207,7 +1229,7 @@ function renderDailyEfficiencyChart(data) {
       maintainAspectRatio: false,
       scales: {
         x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { type: 'linear', position: 'left', ticks: { color: '#f59e0b' }, grid: { color: 'rgba(245, 158, 11, 0.05)' } },
         y1: { type: 'linear', position: 'right', ticks: { color: '#3b82f6' }, grid: { drawOnChartArea: false } }
       },
       plugins: { legend: { labels: { color: '#f8fafc' } } }
