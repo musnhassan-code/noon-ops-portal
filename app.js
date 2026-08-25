@@ -139,9 +139,8 @@ async function validateLogin() {
   errorMsg.innerText = "⏳ Verifying user credentials...";
   errorMsg.style.display = 'block';
 
-  // Master Admin Fallback
   if (email === "admin@noon.com" && passcode === "admin123") {
-    const adminUser = { name: "Master Admin", email: "admin@noon.com", role: "ADMIN", tabs: ["attendance", "trips", "dailyReport", "admin"] };
+    const adminUser = { name: "Master Admin", email: "admin@noon.com", role: "ADMIN", tabs: ["attendance", "trips", "drivers", "dailyReport", "admin"] };
     sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(adminUser));
     unlockPortal(adminUser);
     return;
@@ -162,7 +161,7 @@ async function validateLogin() {
       return;
     }
 
-    matchedUser.tabs = matchedUser.role === 'ADMIN' ? ["attendance", "trips", "dailyReport", "admin"] : ["attendance", "trips", "dailyReport"];
+    matchedUser.tabs = matchedUser.role === 'ADMIN' ? ["attendance", "trips", "drivers", "dailyReport", "admin"] : ["attendance", "trips", "drivers", "dailyReport"];
     sessionStorage.setItem('noon_ops_auth_user', JSON.stringify(matchedUser));
     unlockPortal(matchedUser);
   } else {
@@ -204,11 +203,12 @@ function buildDynamicNavTabs(user) {
   const tabDefinitions = {
     attendance: { id: 'btnTabAttendance', title: '🚚 Fleet Attendance', target: 'attendanceView' },
     trips: { id: 'btnTabTrips', title: '🗂️ Middle Mile Command Center', target: 'dataEntryView' },
+    drivers: { id: 'btnTabDrivers', title: '👨‍✈️ Drivers Analytics & Fleet', target: 'driversView' },
     dailyReport: { id: 'btnTabDailyReport', title: '📊 Daily Performance & Analytics', target: 'dailyReportView' },
     admin: { id: 'btnTabAdmin', title: '👑 Admin Control', target: 'adminTabView' }
   };
 
-  let allowedKeys = user.tabs || ['attendance', 'trips', 'dailyReport'];
+  let allowedKeys = user.tabs || ['attendance', 'trips', 'drivers', 'dailyReport'];
   if (user.role === 'ADMIN' && !allowedKeys.includes('admin')) {
     allowedKeys.push('admin');
   }
@@ -248,6 +248,8 @@ function switchMainTab(targetId) {
     fetchAttendanceSheetData();
   } else if (targetId === 'dataEntryView' && !globalDataEntryRaw.length) {
     fetchGoogleSheetData();
+  } else if (targetId === 'driversView') {
+    renderDriversDashboard();
   } else if (targetId === 'dailyReportView') {
     populateDailySingleDateDropdown();
     renderDailyReportDashboard();
@@ -267,6 +269,21 @@ function parseCleanNumber(val) {
   let cleanStr = String(val).replace(/,/g, '').replace(/[^0-9.-]/g, '').trim();
   let num = parseFloat(cleanStr);
   return isNaN(num) ? 0 : num;
+}
+
+function formatExcelDate(val) {
+  if (!val) return "";
+  let num = Number(val);
+  if (!isNaN(num) && num > 30000 && num < 60000) {
+    let dateObj = XLSX.SSF.parse_date_code(num);
+    if (dateObj) {
+      let y = dateObj.y;
+      let m = String(dateObj.m).padStart(2, '0');
+      let d = String(dateObj.d).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+  }
+  return String(val).trim();
 }
 
 /* ATTENDANCE DATA ENGINE */
@@ -426,21 +443,6 @@ function exportAttendanceExcel() {
   XLSX.writeFile(wb, `Fleet_Attendance_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-function formatExcelDate(val) {
-  if (!val) return "";
-  let num = Number(val);
-  if (!isNaN(num) && num > 30000 && num < 60000) {
-    let dateObj = XLSX.SSF.parse_date_code(num);
-    if (dateObj) {
-      let y = dateObj.y;
-      let m = String(dateObj.m).padStart(2, '0');
-      let d = String(dateObj.d).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-  }
-  return String(val).trim();
-}
-
 /* TRIPS GOOGLE SHEET ENGINE */
 async function fetchGoogleSheetData() {
   const updatedTag = document.getElementById('lastUpdatedTag');
@@ -539,9 +541,6 @@ function applyDataEntryFilters() {
   });
 
   renderDataEntryDashboard();
-  if (document.getElementById('dailyReportView').classList.contains('active')) {
-    renderDailyReportDashboard();
-  }
 }
 
 function renderDataEntryDashboard() {
@@ -693,7 +692,6 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
     }
   });
 
-  // DRIVERS TABLE
   const driverBody = document.getElementById('deDriverTableBody');
   if (driverBody) {
     driverBody.innerHTML = '';
@@ -714,7 +712,6 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
     });
   }
 
-  // STORES TABLE
   const storeBody = document.getElementById('deStoreTableBody');
   if (storeBody) {
     storeBody.innerHTML = '';
@@ -739,7 +736,6 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
     });
   }
 
-  // TEMPERATURE TABLE
   const tempBody = document.getElementById('deTempTableBody');
   if (tempBody) {
     tempBody.innerHTML = '';
@@ -768,6 +764,135 @@ function renderTripsAnalyticsDashboard(totalDispatchedQty, totalTotes, temps) {
       `;
     });
   }
+}
+
+/* DRIVERS ANALYTICS TAB ENGINE */
+let driversSummaryList = [];
+
+function renderDriversDashboard() {
+  const tbody = document.getElementById('driversReportTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const fromDate = document.getElementById('drvFilterFrom') ? document.getElementById('drvFilterFrom').value : '';
+  const toDate = document.getElementById('drvFilterTo') ? document.getElementById('drvFilterTo').value : '';
+  const query = document.getElementById('drvSearchInput') ? document.getElementById('drvSearchInput').value.toLowerCase() : '';
+
+  const driverMap = {};
+
+  globalDataEntryRaw.forEach(r => {
+    const dDate = formatExcelDate(r[0]);
+    if (fromDate && dDate < fromDate) return;
+    if (toDate && dDate > toDate) return;
+
+    const driver = String(r[9] || "Unassigned").trim();
+    const veh = String(r[8] || "Unassigned").trim();
+    const qty = parseCleanNumber(r[16]);
+    const totes = parseCleanNumber(r[14]);
+    const temp = parseCleanNumber(r[12]);
+    const store = String(r[3] || "").trim();
+    const tripId = String(r[7] || r[1] || "").trim();
+
+    const barcodeStr = String(r[17] || "");
+    const barcodeCount = barcodeStr ? barcodeStr.split(/[,|]/).map(s=>s.trim()).filter(Boolean).length : 1;
+
+    const key = `${driver}___${veh}`;
+
+    if (!driverMap[key]) {
+      driverMap[key] = {
+        driver: driver,
+        veh: veh,
+        trips: new Set(),
+        qty: 0,
+        totes: 0,
+        pallets: 0,
+        stores: new Set(),
+        temps: []
+      };
+    }
+
+    driverMap[key].qty += qty;
+    driverMap[key].totes += totes;
+    driverMap[key].pallets += barcodeCount;
+    if (store) driverMap[key].stores.add(store);
+    if (tripId) driverMap[key].trips.add(tripId);
+    if (temp > 0) driverMap[key].temps.push(temp);
+  });
+
+  let driverKeys = Object.keys(driverMap);
+
+  if (query) {
+    driverKeys = driverKeys.filter(k => 
+      driverMap[k].driver.toLowerCase().includes(query) || 
+      driverMap[k].veh.toLowerCase().includes(query)
+    );
+  }
+
+  driversSummaryList = driverKeys.map(k => driverMap[k]);
+
+  // UPDATE KPI STATS
+  let totalDrivers = driversSummaryList.length;
+  let totalTripsCount = driversSummaryList.reduce((acc, d) => acc + d.trips.size, 0);
+  let totalUnitsCount = driversSummaryList.reduce((acc, d) => acc + d.qty, 0);
+  let allTemps = [];
+  driversSummaryList.forEach(d => allTemps.push(...d.temps));
+  let avgFleetTemp = allTemps.length ? (allTemps.reduce((a,b)=>a+b,0)/allTemps.length).toFixed(1) : 0;
+
+  if (document.getElementById('drvKpiTotalDrivers')) document.getElementById('drvKpiTotalDrivers').innerText = totalDrivers;
+  if (document.getElementById('drvKpiTotalTrips')) document.getElementById('drvKpiTotalTrips').innerText = totalTripsCount;
+  if (document.getElementById('drvKpiTotalUnits')) document.getElementById('drvKpiTotalUnits').innerText = totalUnitsCount.toLocaleString();
+  if (document.getElementById('drvKpiAvgTemp')) document.getElementById('drvKpiAvgTemp').innerText = `${avgFleetTemp}°C`;
+
+  if (driversSummaryList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-msg">No driver records found for selected criteria.</td></tr>`;
+    return;
+  }
+
+  driversSummaryList.sort((a,b) => b.qty - a.qty).forEach(d => {
+    let avgTemp = d.temps.length ? (d.temps.reduce((a,b)=>a+b,0)/d.temps.length).toFixed(1) : "-";
+    let tempBadge = "background:#dcfce7; color:#166534;";
+    let tempLabel = "Optimal";
+
+    if (avgTemp > 8) {
+      tempBadge = "background:#fee2e2; color:#991b1b;";
+      tempLabel = "Critical Breach";
+    } else if (avgTemp > 5) {
+      tempBadge = "background:#fef3c7; color:#b45309;";
+      tempLabel = "Warning Zone";
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${d.driver}</strong></td>
+      <td><strong style="color:var(--primary-red); font-size:13px;">${d.veh}</strong></td>
+      <td><strong>${d.trips.size} Trips</strong></td>
+      <td><strong style="color:var(--green-accent); font-size:13px;">${d.qty.toLocaleString()} QTY</strong></td>
+      <td><strong>${d.pallets.toLocaleString()} Pallets</strong></td>
+      <td><strong>${d.totes.toLocaleString()} Totes</strong></td>
+      <td><strong style="color:var(--blue-accent);">${d.stores.size} Stores</strong></td>
+      <td><strong>${avgTemp !== "-" ? avgTemp + "°C" : "-"}</strong></td>
+      <td><span class="badge-status" style="${tempBadge}">${tempLabel}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function exportDriversReportExcel() {
+  const exportData = driversSummaryList.map(r => ({
+    Driver_Name: r.driver,
+    Vehicle_Plate: r.veh,
+    Trips_Executed: r.trips.size,
+    Dispatched_Qty: r.qty,
+    Total_Pallets: r.pallets,
+    Total_Totes: r.totes,
+    Stores_Served: r.stores.size,
+    Avg_Vehicle_Temp: r.temps.length ? (r.temps.reduce((a,b)=>a+b,0)/r.temps.length).toFixed(1) : "N/A"
+  }));
+
+  let ws = XLSX.utils.json_to_sheet(exportData);
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Drivers_Performance");
+  XLSX.writeFile(wb, `Drivers_Performance_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 /* DAILY REPORT DYNAMIC FILTER TOGGLE & SINGLE DATE DROPDOWN */
@@ -860,7 +985,6 @@ function renderDailyReportDashboard() {
     if (driver) dailyMap[dDate].drivers.add(driver);
     if (tripId) dailyMap[dDate].trips.add(tripId);
 
-    // Heatmap Aggregation
     if (!heatmapShiftMap[dDate]) {
       heatmapShiftMap[dDate] = { "Shift 1": 0, "Shift 2": 0, "Shift 3": 0 };
     }
@@ -873,7 +997,6 @@ function renderDailyReportDashboard() {
   const sortedDates = Object.keys(dailyMap).sort();
   dailySummaryAggregated = sortedDates.map(d => dailyMap[d]);
 
-  // UPDATE KPI TOP SUMMARY CARDS
   let kpiQty = 0, kpiPallets = 0, kpiTotes = 0;
   let allStoresSet = new Set(), allDriversSet = new Set(), allTripsSet = new Set();
 
