@@ -1,5 +1,5 @@
 /* GOOGLE APPS SCRIPT WEB APP API URL */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7qwNZa7zsTUYpF-vGqBkxD6OlVH8KJEw0bnFNjIzeOsM04LmAgPHrqr4g9KPqsF4/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWABrOHbQKF9wMO4IR8eTOiICWrlEt7Jj-Os7nsJaDJF5VBcN38avKduY4msxSUonp/exec";
 
 let globalAttendanceRaw = [];
 let filteredAttendance = [];
@@ -354,15 +354,17 @@ function parseCleanNumber(val) {
   return isNaN(num) ? 0 : num;
 }
 
-/* FORMAT DATE FUNCTION (PREVENTING 31-05-2026 UTC SHIFT) */
+/* FORMAT DATE FUNCTION (STRICT STRING HANDLING PREVENTING 31-05-2026 UTC SHIFT) */
 function formatExcelDate(val) {
   if (!val) return "";
   let strVal = String(val).trim();
 
+  // لو جاية بصيغة YYYY-MM-DD ترجع مباشرة بدون المساس بالـ Timezone
   if (strVal.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return strVal;
   }
 
+  // لو جاية بصيغة DD/MM/YYYY
   if (strVal.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
     let parts = strVal.split('/');
     let d = parts[0].padStart(2, '0');
@@ -371,6 +373,7 @@ function formatExcelDate(val) {
     return `${y}-${m}-${d}`;
   }
 
+  // معالجة تواريخ ISO وتثبيت التاريخ حسب التوقيت العالمي UTC
   if (strVal.includes('T')) {
     let d = new Date(strVal);
     if (!isNaN(d.getTime())) {
@@ -1264,7 +1267,7 @@ function exportDailyReportExcel() {
   XLSX.writeFile(wb, `Daily_Dispatch_Summary_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-/* TRIP DETAILS MODAL & ANIMATED JUMBO TRUCK ROAD VISUALIZER */
+/* TRIP DETAILS MODAL & ANIMATED ROAD VISUALIZER */
 function openTripModal(indexOrTripId) {
   let tripRows = [];
   let targetTripId = "";
@@ -1310,9 +1313,18 @@ function openTripModal(indexOrTripId) {
     let mapNodesHTML = `
       <div class="asphalt-road">
         <div class="road-line"></div>
-        <div class="jumbo-truck">
+        <div class="transit-jumbo-truck" style="top:-14px; animation: driveTruck 8s linear infinite;">
+          <div class="truck-container-box">
+            <div class="container-graphics">
+              <div class="brand-line-1">EVERYTHING</div>
+              <div class="brand-line-2">IN MINUTES</div>
+            </div>
+          </div>
           <div class="truck-cabin"></div>
-          <div class="truck-container">NOON EXPRESS</div>
+          <div class="underglow-leds"></div>
+          <div class="truck-wheel wheel-back-1"></div>
+          <div class="truck-wheel wheel-back-2"></div>
+          <div class="truck-wheel wheel-front"></div>
         </div>
       </div>
       <div class="road-nodes-wrapper">
